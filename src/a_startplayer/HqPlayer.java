@@ -1,9 +1,9 @@
-package startplayer;
+package a_startplayer;
 
 import aic2023.user.Direction;
 import aic2023.user.UnitController;
 import aic2023.user.UnitType;
-import startplayer.util.FastRandom;
+import a_startplayer.util.FastRandom;
 
 public class HqPlayer {
     private final UnitController uc;

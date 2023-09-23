@@ -1,7 +1,7 @@
-package startplayer;
+package a_startplayer;
 
 import aic2023.user.UnitController;
-import startplayer.util.FastRandom;
+import a_startplayer.util.FastRandom;
 
 public class BatterPlayer {
     private final UnitController uc;

@@ -1,4 +1,4 @@
-package startplayer.util;
+package a_startplayer.util;
 
 
 // based on https://github.com/TheK098/Battlecode2023/blob/main/src/qp1_13_tuning/utilities/FastRandom.java

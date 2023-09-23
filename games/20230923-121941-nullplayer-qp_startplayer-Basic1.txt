@@ -2,7 +2,7 @@ AIC2023
 Basic1
 134
 nullplayer
-startplayer
+a_startplayer
 B
 Random
 31 31
