@@ -48,7 +48,7 @@ public class HqPlayer {
         while (true) {
             comms.checkIn();
 
-            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
+//            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
             UnitInfo[] enemies = uc.senseUnits(SENSING_RADIUS, uc.getOpponent());
             boolean enemyBattersNearby = false;
