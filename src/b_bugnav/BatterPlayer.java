@@ -20,6 +20,7 @@ public class BatterPlayer {
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
             final UnitInfo toAttack = pickTargetToAttack(enemies);
             if (toAttack != null) {
+//                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
                 attack(toAttack);
             }
 
@@ -49,13 +50,15 @@ public class BatterPlayer {
 //        uc.println("pickTarget start " + uc.getEnergyUsed());
 
         UnitInfo toAttack = null;
-        int bestAttackScore = 0;
+        int bestAttackScore = -1;
         for (int i = enemies.length - 1; i >= 0; --i) {
             final int val = directionToMoveToAttack(enemies[i]);
             if (val != -1) {
                 // score by attack effectiveness (how much net reputation we gain), tiebreak by closest enemy
                 // batters are implicitly targeted first because they are worth 60 rep, which is more than the others
-                final int attackScore = 10 * (val / 9) - uc.getLocation().distanceSquared(enemies[i].getLocation());
+
+                // add 2 because we want to attack anything within distance 2 no matter what
+                final int attackScore = 10 * (val / 9) - uc.getLocation().distanceSquared(enemies[i].getLocation()) + 2;
                 if (bestAttackScore < attackScore) {
                     bestAttackScore = attackScore;
                     toAttack = enemies[i];
@@ -94,7 +97,7 @@ public class BatterPlayer {
         if (!uc.canMove()) {
             if (uc.getLocation().distanceSquared(target.getLocation()) <= 2) {
                 final int effectiveness = hitEffectiveness(target, uc.getLocation().directionTo(target.getLocation()));
-                if (effectiveness > 0) {
+                if (effectiveness >= 0) {
                     return effectiveness * 9 + Direction.ZERO.ordinal();
                 }
             }
@@ -103,7 +106,7 @@ public class BatterPlayer {
         }
 
         int bestDir = -1;
-        int bestEffectiveness = 0;
+        int bestEffectiveness = -1;
         // try cardinal directions first so that move cooldown is smaller
         for (int i = 8; i >= 0; --i) {
             final Location loc = uc.getLocation().add(Direction.values()[i]);
