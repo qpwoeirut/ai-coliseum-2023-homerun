@@ -58,6 +58,19 @@ public class Util {
         return closestIndex;
     }
 
+    public static int getMaxIndex(int[] values, int n) {
+        if (n <= 0) return -1;
+        int bestValue = values[0];
+        int bestIndex = 0;
+        for (int i = n - 1; i > 0; --i) {
+            if (bestValue < values[i]) {
+                bestValue = values[i];
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
+    }
+
     public static void tryMoveInDirection(UnitController uc, Direction dir) {
         if (uc.canMove(dir)) uc.move(dir);
         else if (uc.canMove(dir.rotateLeft())) uc.move(dir.rotateLeft());
