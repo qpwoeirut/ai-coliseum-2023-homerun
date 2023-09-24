@@ -13,7 +13,7 @@ public class CatcherPlayer {
 
     void run() {
         while (true) {
-            uc.move(bg.move_to_object(MapObject.BASE));
+            uc.move(bg.move_to_objects());
             uc.yield();
         }
     }
