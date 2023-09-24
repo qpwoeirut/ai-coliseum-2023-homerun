@@ -46,6 +46,10 @@ public class HqPlayer {
         final int hqY = uc.getLocation().y;
         // handle other turns
         while (true) {
+            comms.checkIn();
+
+            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
+
             UnitInfo[] enemies = uc.senseUnits(SENSING_RADIUS, uc.getOpponent());
             boolean enemyBattersNearby = false;
             boolean[][] hasEnemyBatter = new boolean[20][20];
@@ -56,7 +60,7 @@ public class HqPlayer {
                 }
             }
 
-            if (comms.countBases() + comms.countStadiums() < comms.countPitchers()) {
+            if (comms.countBases() + comms.countStadiums() > comms.countPitchers()) {
                 while (uc.getReputation() >= UnitType.PITCHER.getStat(UnitStat.REP_COST) && recruitUnitSafely(UnitType.PITCHER, hasEnemyBatter)) {
                     // recruitUnitSafely will spawn units until we can't anymore
                 }

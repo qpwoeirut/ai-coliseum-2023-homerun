@@ -1,17 +1,22 @@
 package b_bugnav;
 
 import aic2023.user.*;
+import b_bugnav.util.Communications;
 import b_bugnav.util.Util;
 
 public class BatterPlayer {
     private final UnitController uc;
+    private final Communications comms;
     BatterPlayer(UnitController uc) {
         this.uc = uc;
+        this.comms = new Communications(uc);
     }
 
     void run() {
         final float VISION = UnitType.BATTER.getStat(UnitStat.VISION_RANGE);
         while (true) {
+            comms.checkIn();
+
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
             final UnitInfo toAttack = pickTargetToAttack(enemies);
             if (toAttack != null) {
