@@ -1,16 +1,19 @@
 package b_bugnav;
 
 import aic2023.user.*;
+import b_bugnav.util.Communications;
 
 public class BugMover {
 
     private final UnitController uc;
+    private final Communications ct;
     private final int INF = 10000;
     private int startvar = 0;
     private Direction prev_move = Direction.SOUTH;
     private final int [] perm = {1,2,0,5,4,6,7,3};
     BugMover(UnitController uc) {
         this.uc = uc;
+        ct = new Communications(uc);
     }
 
     Direction move (Location fin)
@@ -51,11 +54,12 @@ public class BugMover {
         return prev_move;
     }
 
-    Direction move_to_object (MapObject object)
+    Direction move_to_objects ()
     {
         uc.println("startvar: " + startvar + " " + Direction.values()[startvar]);
         Location loc = uc.getLocation();
-        Location[] objects = uc.senseObjects(object, INF);
+        Location[] bases = uc.senseObjects(MapObject.BASE, INF);
+        Location[] stadiums = uc.senseObjects(MapObject.STADIUM, INF);
         int current_index = 0;
         for (int i = 0; i < 8; i++)
         {
@@ -81,9 +85,14 @@ public class BugMover {
         {
             return prev_move;
         }
-        if (objects.length != 0)
+        if (bases.length != 0)
         {
             //report existence of object
+            ct.reportNewBases(bases);
+        }
+        if (stadiums.length != 0)
+        {
+            ct.reportNewStadiums(stadiums);
         }
 
         Direction next_dir = Direction.values()[(current_index + 2) % 8];
