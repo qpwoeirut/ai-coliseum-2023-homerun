@@ -3,14 +3,11 @@ package b_bugnav;
 import aic2023.user.*;
 import b_bugnav.util.Communications;
 
-public class HqPlayer {
-    private final UnitController uc;
-    private final Communications comms;
+public class HqPlayer extends BasePlayer {
     private final int OFFSET = 10;  // vision radius is 8
 
     HqPlayer(UnitController uc) {
-        this.uc = uc;
-        this.comms = new Communications(uc);
+        super(uc);
     }
 
     void run() {
@@ -50,7 +47,7 @@ public class HqPlayer {
 
 //            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
-            UnitInfo[] enemies = uc.senseUnits(SENSING_RADIUS, uc.getOpponent());
+            UnitInfo[] enemies = senseAndReportEnemies();
             boolean enemyBattersNearby = false;
             boolean[][] hasEnemyBatter = new boolean[20][20];
             for (int i = enemies.length - 1; i >= 0; --i) {

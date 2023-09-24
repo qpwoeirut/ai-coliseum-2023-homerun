@@ -7,15 +7,9 @@ import aic2023.user.UnitController;
 import b_bugnav.util.Communications;
 import b_bugnav.util.Util;
 
-public class PitcherPlayer {
-    private final UnitController uc;
-    private final Communications comms;
-    private final BugMover bg;
-
+public class PitcherPlayer extends BasePlayer {
     PitcherPlayer(UnitController uc) {
-        this.uc = uc;
-        this.comms = new Communications(uc);
-        this.bg = new BugMover(uc);
+        super(uc);
     }
 
     void run() {
@@ -24,6 +18,7 @@ public class PitcherPlayer {
         int claimedObjectId = -1;
         while (true) {
             comms.checkIn();
+            senseAndReportEnemies();
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
 

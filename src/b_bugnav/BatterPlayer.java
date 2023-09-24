@@ -1,23 +1,18 @@
 package b_bugnav;
 
 import aic2023.user.*;
-import b_bugnav.util.Communications;
 import b_bugnav.util.Util;
 
-public class BatterPlayer {
-    private final UnitController uc;
-    private final Communications comms;
+public class BatterPlayer extends BasePlayer {
     BatterPlayer(UnitController uc) {
-        this.uc = uc;
-        this.comms = new Communications(uc);
+        super(uc);
     }
 
     void run() {
-        final float VISION = UnitType.BATTER.getStat(UnitStat.VISION_RANGE);
         while (true) {
             comms.checkIn();
 
-            UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
+            UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo toAttack = pickTargetToAttack(enemies);
             if (toAttack != null) {
 //                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
@@ -31,7 +26,14 @@ public class BatterPlayer {
                     if (nearestEnemy != null) {
                         Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
                     } else {
-                        Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                        final int reportedEnemyCount = comms.listEnemySightings();
+                        final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
+                        final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                        if (uc.canMove(toMove)) {
+                            uc.move(toMove);
+                        } else {
+                            Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                        }
                     }
                 } else {
                     if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= 18) {

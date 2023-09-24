@@ -1,0 +1,34 @@
+package b_bugnav;
+
+import aic2023.user.*;
+import b_bugnav.util.Communications;
+
+abstract public class BasePlayer {
+    protected final UnitController uc;
+    protected final Communications comms;
+    protected final BugMover bg;
+    protected final float VISION;
+
+    BasePlayer(UnitController uc) {
+        this.uc = uc;
+        this.comms = new Communications(uc);
+        this.bg = new BugMover(uc);
+
+        VISION = uc.getType().getStat(UnitStat.VISION_RANGE);
+    }
+
+    void move(Location fin) {
+        uc.move(bg.move(fin));
+    }
+
+    UnitInfo[] senseAndReportEnemies() {
+        UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
+        for (int i = enemies.length - 1; i >= 0; --i) {
+            comms.reportEnemySighting(enemies[i].getLocation(), enemies[i].getType() == UnitType.BATTER ? 10 : 5);
+            // TODO: tune urgency numbers, consider changing behaviors for different units doing the sensing
+        }
+        return enemies;
+    }
+
+
+}
