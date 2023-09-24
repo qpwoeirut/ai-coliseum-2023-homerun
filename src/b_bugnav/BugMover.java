@@ -56,7 +56,7 @@ public class BugMover {
 
     Direction move_to_objects ()
     {
-        uc.println("startvar: " + startvar + " " + Direction.values()[startvar]);
+//        uc.println("startvar: " + startvar + " " + Direction.values()[startvar]);
         Location loc = uc.getLocation();
         Location[] bases = uc.senseObjects(MapObject.BASE, INF);
         Location[] stadiums = uc.senseObjects(MapObject.STADIUM, INF);
@@ -133,7 +133,7 @@ public class BugMover {
             }
         }
         Direction final_dir = Direction.NORTHEAST;
-        uc.println("here again");
+//        uc.println("here again");
         prev_move = final_dir;
         return final_dir;
     }
