@@ -122,8 +122,8 @@ public class Communications {
      * @return int: an integer with the number of unclaimed bases found
      * The base locations can be accessed in the public returnedLocations array
      */
-    public int findUnclaimedBases() {
-        return findUnclaimedObjects(BASE_OFFSET);
+    public int listUnclaimedBases() {
+        return listUnclaimedObjects(BASE_OFFSET);
     }
 
     /**
@@ -131,11 +131,11 @@ public class Communications {
      * @return int: an integer with the number of unclaimed stadiums found
      * The base locations can be accessed in the public returnedLocations array
      */
-    public int findUnclaimedStadiums() {
-        return findUnclaimedObjects(STADIUM_OFFSET);
+    public int listUnclaimedStadiums() {
+        return listUnclaimedObjects(STADIUM_OFFSET);
     }
 
-    private int findUnclaimedObjects(int offset) {
+    private int listUnclaimedObjects(int offset) {
         int totalObjects = uc.read(offset);
         if (returnedLocations.length < totalObjects) {
             returnedLocations = new Location[totalObjects];

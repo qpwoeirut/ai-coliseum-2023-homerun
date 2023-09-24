@@ -40,7 +40,7 @@ public class PitcherPlayer {
                     }
                 }
             } else {
-                final int unclaimedBaseCount = comms.findUnclaimedBases();
+                final int unclaimedBaseCount = comms.listUnclaimedBases();
 //                uc.println("unclaimedBaseCount: " + unclaimedBaseCount);
 //                for (int i = 0; i < unclaimedBaseCount; ++i) {
 //                    uc.println(comms.returnedLocations[i] + " " + comms.returnedIds[i]);
@@ -54,7 +54,7 @@ public class PitcherPlayer {
                 }
 
                 if (claimedObjectLocation == null) {
-                    final int unclaimedStadiumCount = comms.findUnclaimedStadiums();
+                    final int unclaimedStadiumCount = comms.listUnclaimedStadiums();
 //                    uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
                     final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
                     if (claimedStadiumIndex != -1) {
