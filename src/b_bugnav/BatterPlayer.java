@@ -28,11 +28,15 @@ public class BatterPlayer extends BasePlayer {
                     } else {
                         final int reportedEnemyCount = comms.listEnemySightings();
                         final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                        final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
-                        if (uc.canMove(toMove)) {
-                            uc.move(toMove);
+                        if (targetEnemySightingIndex == -1) {
+                            Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
                         } else {
-                            Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                            final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                            if (uc.canMove(toMove)) {
+                                uc.move(toMove);
+                            } else {
+                                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                            }
                         }
                     }
                 } else {
