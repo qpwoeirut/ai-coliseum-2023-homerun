@@ -1,7 +1,6 @@
 package b_bugnav;
 
 import aic2023.user.*;
-import b_bugnav.util.Communications;
 
 public class HqPlayer extends BasePlayer {
     private final int OFFSET = 10;  // vision radius is 8
@@ -61,7 +60,7 @@ public class HqPlayer extends BasePlayer {
                 while (uc.getReputation() >= UnitType.PITCHER.getStat(UnitStat.REP_COST) && recruitUnitSafely(UnitType.PITCHER, hasEnemyBatter)) {
                     // recruitUnitSafely will spawn units until we can't anymore
                 }
-            } else if (enemyBattersNearby || comms.countBatters() <= comms.countCatchers()) {
+            } else if (enemyBattersNearby || comms.countBatters() <= comms.countCatchers() * 4) {
                 recruitUnitSafely(UnitType.BATTER, hasEnemyBatter);
             } else {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
