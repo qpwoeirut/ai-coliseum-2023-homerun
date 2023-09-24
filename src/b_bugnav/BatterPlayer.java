@@ -1,7 +1,6 @@
 package b_bugnav;
 
 import aic2023.user.Location;
-import aic2023.user.Team;
 import aic2023.user.UnitController;
 import aic2023.user.UnitInfo;
 
@@ -12,9 +11,6 @@ public class BatterPlayer {
     }
 
     void run() {
-
-
-        Team my = uc.getTeam();
         while (true) {
             Location loc = uc.getLocation();
             if (uc.canAct()){
@@ -23,11 +19,7 @@ public class BatterPlayer {
                         Location dir = loc.add(x,y);
 
                         UnitInfo u = uc.senseUnitAtLocation(dir);
-                        if (u == null) {
-                            continue;
-                        }
-                        //UnitType t = u.getType();
-                        else{
+                        if (u != null && u.getTeam() == uc.getOpponent()) {
                             uc.bat(loc.directionTo(dir), 3);
                             uc.yield();
                         }
