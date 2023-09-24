@@ -31,10 +31,17 @@ public class Communications {
     private final int PITCHER_NUMBER = 2;
     private final int HQ_NUMBER = 3;
 
+    private final int ENEMY_SIGHTING_OFFSET = 200000;
+    private final int ENEMY_SIZE = 3;
+    private final int ENEMY_X = 1;
+    private final int ENEMY_Y = 2;
+    private final int ENEMY_URGENCY = 3;
+    private final int ENEMY_MERGE_DISTANCE = 12;
+
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
-    // if there are more than 8 objects, we'll reallocate
-    public Location[] returnedLocations = new Location[8];
-    public int[] returnedIds = new int[8];
+    public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
+    public int[] returnedIds = new int[8];  // only used for map objects
+    public int[] returnedUrgencies = new int[20];  // only used for enemy sightings
 
     public Communications(UnitController uc) {
         this.uc = uc;
@@ -171,5 +178,53 @@ public class Communications {
 
     private int readObjectProperty(int offset, int index, int property) {
         return uc.read(offset + OBJECT_SIZE * index + property);
+    }
+
+    public void reportEnemySighting(Location loc, int urgency) {
+        final int currentSightingCount = uc.read(ENEMY_SIGHTING_OFFSET);
+        for (int i = currentSightingCount - 1; i >= 0; --i) {
+            final int oldUrgency = readSightingProperty(i, ENEMY_URGENCY);
+            if (oldUrgency <= 0) {  // sighting has decayed, we can replace it
+                writeSightingProperty(i, ENEMY_X, loc.x);
+                writeSightingProperty(i, ENEMY_Y, loc.y);
+                writeSightingProperty(i, ENEMY_URGENCY, urgency);
+                return;
+            } else if (loc.distanceSquared(new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y))) <= ENEMY_MERGE_DISTANCE) {
+                // sightings are close enough that we can merge them
+                writeSightingProperty(i, ENEMY_URGENCY, (int)(Math.sqrt(oldUrgency * oldUrgency + urgency) + 0.999));  // TODO: is sqrt bytecode-expensive?
+                return;
+            }
+        }
+
+        writeSightingProperty(currentSightingCount, ENEMY_X, loc.x);
+        writeSightingProperty(currentSightingCount, ENEMY_Y, loc.y);
+        writeSightingProperty(currentSightingCount, ENEMY_URGENCY, urgency);
+        uc.write(ENEMY_SIGHTING_OFFSET, currentSightingCount + 1);
+    }
+
+    /**
+     * Lists all enemy sighting locations and urgencies.
+     * @return int: the number of enemy sightings
+     * The enemy locations can be accessed in the public returnedLocations array.
+     * The urgency of each sighting can be accessed in the public returnedUrgency array.
+     * No IDs are returned. The returnedIds array is not modified and will likely contain stale data.
+     */
+    public int listEnemySightings() {
+        final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
+        int n = 0;
+        for (int i = totalEnemySightings - 1; i >= 0; --i) {
+            if (readSightingProperty(i, ENEMY_URGENCY) > 0) {
+                returnedLocations[n] = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
+                returnedUrgencies[n++] = readSightingProperty(i, ENEMY_URGENCY);
+            }
+        }
+        return n;
+    }
+
+    private int readSightingProperty(int index, int property) {
+        return uc.read(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property);
+    }
+    private void writeSightingProperty(int index, int property, int value) {
+        uc.write(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property, value);
     }
 }
