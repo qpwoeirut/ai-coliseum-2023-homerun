@@ -41,6 +41,7 @@ public class BatterPlayer {
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
         if (!uc.canAct()) return null;
+//        uc.println("pickTarget start " + uc.getEnergyUsed());
 
         UnitInfo toAttack = null;
         int bestAttackScore = 0;
@@ -56,28 +57,35 @@ public class BatterPlayer {
                 }
             }
         }
+
+//        uc.println("pickTarget end " + uc.getEnergyUsed());
         return toAttack;
     }
 
     boolean attack(UnitInfo target) {  // return value current unused but might be useful later, will leave for now
+//        uc.println("attack start " + uc.getEnergyUsed());
+
         final int val = directionToMoveToAttack(target);
-        if (val == -1) return false;
+        if (val == -1) return false;  // this should only ever happen if we ran out of bytecode
         Direction dir = Direction.values()[val % 9];
         if (dir != Direction.ZERO) {
-            if (!uc.canMove(dir)) return false;
+            if (!uc.canMove(dir)) return false;  // also should only happen if we run out of bytecode
             uc.move(dir);
         }
 
         dir = uc.getLocation().directionTo(target.getLocation());
         if (uc.canBat(dir, GameConstants.MAX_STRENGTH)) {
             uc.bat(dir, GameConstants.MAX_STRENGTH);
+//            uc.println("attack end " + uc.getEnergyUsed());
             return true;
         }
 
+//        uc.println("attack end " + uc.getEnergyUsed());
         return false;
     }
 
     int directionToMoveToAttack(UnitInfo target) {
+//        uc.println("directionToMove start " + uc.getEnergyUsed());
         if (!uc.canMove()) {
             if (uc.getLocation().distanceSquared(target.getLocation()) <= 2) {
                 final int effectiveness = hitEffectiveness(target, uc.getLocation().directionTo(target.getLocation()));
@@ -85,6 +93,7 @@ public class BatterPlayer {
                     return effectiveness * 9 + Direction.ZERO.ordinal();
                 }
             }
+//            uc.println("directionToMove end " + uc.getEnergyUsed());
             return -1;
         }
 
@@ -101,24 +110,40 @@ public class BatterPlayer {
                 }
             }
         }
+
+//        uc.println("directionToMove end " + uc.getEnergyUsed());
         return bestEffectiveness * 9 + bestDir;
     }
 
     int hitEffectiveness(UnitInfo target, Direction dir) {
+//        uc.println("hitEffectiveness start " + uc.getEnergyUsed());
+
         Location loc = target.getLocation();
         for (int i = 0; i < GameConstants.MAX_STRENGTH; ++i) {
+//            uc.println("hitEffectiveness start " + i + " " + uc.getEnergyUsed());
             loc = loc.add(dir);
-            if (uc.isOutOfMap(loc)) return (int)target.getType().getStat(UnitStat.REP_COST);
+
+            if (uc.getLocation().distanceSquared(loc) > uc.getType().getStat(UnitStat.VISION_RANGE)) break;
+
+            if (uc.isOutOfMap(loc)) {
+//                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
+                return (int)target.getType().getStat(UnitStat.REP_COST);
+            }
 
             final MapObject map = uc.senseObjectAtLocation(loc, true);
-            if (map == MapObject.BALL || map == MapObject.WATER) return (int)target.getType().getStat(UnitStat.REP_COST);
+            if (map == MapObject.BALL || map == MapObject.WATER) {
+//                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
+                return (int)target.getType().getStat(UnitStat.REP_COST);
+            }
 
             final UnitInfo unit = uc.senseUnitAtLocation(loc);
             if (unit != null) {
+//                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
                 return (int)target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int)unit.getType().getStat(UnitStat.REP_COST);
             }
         }
 
+//        uc.println("hitEffectiveness end " + uc.getEnergyUsed());
         return 0;
     }
 }
