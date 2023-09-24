@@ -1,8 +1,13 @@
 package b_bugnav;
-import aic2023.user.*;
+
+import aic2023.user.Location;
+import aic2023.user.Team;
+import aic2023.user.UnitController;
+import aic2023.user.UnitInfo;
 import b_bugnav.util.FastRandom;
 
 import java.util.*;
+
 public class BatterPlayer {
     private final UnitController uc;
     private final FastRandom random;
