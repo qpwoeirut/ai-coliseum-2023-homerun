@@ -4,16 +4,11 @@ import aic2023.user.Location;
 import aic2023.user.Team;
 import aic2023.user.UnitController;
 import aic2023.user.UnitInfo;
-import b_bugnav.util.FastRandom;
-
-import java.util.*;
 
 public class BatterPlayer {
     private final UnitController uc;
-    private final FastRandom random;
     BatterPlayer(UnitController uc) {
         this.uc = uc;
-        this.random = new FastRandom(uc.getInfo().getID());
     }
 
     void run() {
@@ -28,7 +23,7 @@ public class BatterPlayer {
                         Location dir = loc.add(x,y);
 
                         UnitInfo u = uc.senseUnitAtLocation(dir);
-                        if (u.equals(null)){
+                        if (u == null) {
                             continue;
                         }
                         //UnitType t = u.getType();
