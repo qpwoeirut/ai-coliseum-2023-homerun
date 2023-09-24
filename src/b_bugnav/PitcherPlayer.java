@@ -4,7 +4,6 @@ import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.MapObject;
 import aic2023.user.UnitController;
-import b_bugnav.util.Communications;
 import b_bugnav.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
@@ -35,28 +34,28 @@ public class PitcherPlayer extends BasePlayer {
                     }
                 }
             } else {
-                final int unclaimedBaseCount = comms.listUnclaimedBases();
-//                uc.println("unclaimedBaseCount: " + unclaimedBaseCount);
-//                for (int i = 0; i < unclaimedBaseCount; ++i) {
-//                    uc.println(comms.returnedLocations[i] + " " + comms.returnedIds[i]);
-//                }
-                final int claimedBaseIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedBaseCount);
-                if (claimedBaseIndex != -1) {
-                    claimedObjectType = MapObject.BASE;
-                    claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
-                    claimedObjectId = comms.returnedIds[claimedBaseIndex];
-                    comms.claimBase(claimedObjectId);
+                final int unclaimedStadiumCount = comms.listUnclaimedStadiums();
+//                uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
+                final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
+                if (claimedStadiumIndex != -1) {
+                    claimedObjectType = MapObject.STADIUM;
+                    claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
+                    claimedObjectId = comms.returnedIds[claimedStadiumIndex];
+                    comms.claimStadium(claimedObjectId);
                 }
 
                 if (claimedObjectLocation == null) {
-                    final int unclaimedStadiumCount = comms.listUnclaimedStadiums();
-//                    uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
-                    final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
-                    if (claimedStadiumIndex != -1) {
-                        claimedObjectType = MapObject.STADIUM;
-                        claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
-                        claimedObjectId = comms.returnedIds[claimedStadiumIndex];
-                        comms.claimStadium(claimedObjectId);
+                    final int unclaimedBaseCount = comms.listUnclaimedBases();
+//                    uc.println("unclaimedBaseCount: " + unclaimedBaseCount);
+//                    for (int i = 0; i < unclaimedBaseCount; ++i) {
+//                        uc.println(comms.returnedLocations[i] + " " + comms.returnedIds[i]);
+//                    }
+                    final int claimedBaseIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedBaseCount);
+                    if (claimedBaseIndex != -1) {
+                        claimedObjectType = MapObject.BASE;
+                        claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
+                        claimedObjectId = comms.returnedIds[claimedBaseIndex];
+                        comms.claimBase(claimedObjectId);
                     }
                 }
             }
