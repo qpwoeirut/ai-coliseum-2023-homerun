@@ -33,9 +33,11 @@ public class PitcherPlayer {
                 } else {
                     comms.updateClaimOnStadium(claimedObjectId);
                 }
-                Direction toMove = bg.move(claimedObjectLocation);
-                if (uc.canMove(toMove)) {
-                    uc.move(toMove);
+                if (!claimedObjectLocation.isEqual(uc.getLocation())) {
+                    Direction toMove = bg.move(claimedObjectLocation);
+                    if (uc.canMove(toMove)) {
+                        uc.move(toMove);
+                    }
                 }
             } else {
                 final int unclaimedBaseCount = comms.findUnclaimedBases();
