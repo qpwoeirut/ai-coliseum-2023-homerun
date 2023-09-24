@@ -46,6 +46,7 @@ public class HqPlayer extends BasePlayer {
 
 //            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
+            comms.decayEnemySightingUrgencies();
             UnitInfo[] enemies = senseAndReportEnemies();
             boolean enemyBattersNearby = false;
             boolean[][] hasEnemyBatter = new boolean[20][20];
