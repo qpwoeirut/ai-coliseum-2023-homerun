@@ -118,18 +118,20 @@ public class Communications {
     }
 
     /**
-     * Finds all bases that have not yet been claimed.
-     * @return int: an integer with the number of unclaimed bases found
-     * The base locations can be accessed in the public returnedLocations array
+     * Lists all bases that have not yet been claimed.
+     * @return int: the number of unclaimed bases
+     * The base locations can be accessed in the public returnedLocations array.
+     * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
     public int listUnclaimedBases() {
         return listUnclaimedObjects(BASE_OFFSET);
     }
 
     /**
-     * Finds all stadiums that have not yet been claimed.
-     * @return int: an integer with the number of unclaimed stadiums found
+     * Lists all stadiums that have not yet been claimed.
+     * @return int: the number of unclaimed stadiums
      * The base locations can be accessed in the public returnedLocations array
+     * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
     public int listUnclaimedStadiums() {
         return listUnclaimedObjects(STADIUM_OFFSET);
