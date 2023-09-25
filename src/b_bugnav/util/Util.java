@@ -78,4 +78,8 @@ public class Util {
         else if (uc.canMove(dir.rotateLeft().rotateLeft())) uc.move(dir.rotateLeft().rotateLeft());
         else if (uc.canMove(dir.rotateRight().rotateRight())) uc.move(dir.rotateRight().rotateRight());
     }
+
+    public static int packLoc(Location loc) {
+        return loc.x * 10000 + loc.y;
+    }
 }
