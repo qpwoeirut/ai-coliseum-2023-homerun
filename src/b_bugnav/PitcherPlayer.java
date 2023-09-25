@@ -17,6 +17,8 @@ public class PitcherPlayer extends BasePlayer {
         int claimedObjectId = -1;
         while (true) {
             comms.checkIn();
+            senseAndReportBases();
+            senseAndReportStadiums();
             senseAndReportEnemies();
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);

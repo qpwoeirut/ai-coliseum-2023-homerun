@@ -11,6 +11,8 @@ public class BatterPlayer extends BasePlayer {
     void run() {
         while (true) {
             comms.checkIn();
+            senseAndReportBases();
+            senseAndReportStadiums();
 
             UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo toAttack = pickTargetToAttack(enemies);

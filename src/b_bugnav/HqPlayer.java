@@ -12,12 +12,9 @@ public class HqPlayer extends BasePlayer {
     void run() {
         final float SENSING_RADIUS = 64;
 
-        Location[] visibleBases = uc.senseObjects(MapObject.BASE, SENSING_RADIUS);
-        Location[] visibleStadiums = uc.senseObjects(MapObject.STADIUM, SENSING_RADIUS);
+        senseAndReportBases();
+        Location[] visibleStadiums = senseAndReportStadiums();
         Location[] visibleWater = uc.senseObjects(MapObject.WATER, SENSING_RADIUS);
-
-        comms.reportNewBases(visibleBases);
-        comms.reportNewStadiums(visibleStadiums);
         comms.reportNewWater(visibleWater);
 
         // handle first turn separately, if we can see a stadium
@@ -43,11 +40,11 @@ public class HqPlayer extends BasePlayer {
         // handle other turns
         while (true) {
             comms.checkIn();
+            comms.decayEnemySightingUrgencies();
+            UnitInfo[] enemies = senseAndReportEnemies();
 
 //            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
-            comms.decayEnemySightingUrgencies();
-            UnitInfo[] enemies = senseAndReportEnemies();
             boolean enemyBattersNearby = false;
             boolean[][] hasEnemyBatter = new boolean[20][20];
             for (int i = enemies.length - 1; i >= 0; --i) {
