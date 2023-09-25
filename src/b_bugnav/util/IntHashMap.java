@@ -9,7 +9,6 @@ import java.util.Arrays;
  * 0 is the default value for nonexistent keys
  */
 public class IntHashMap {
-    private static final int INITIAL_BIN_CAPACITY = 4;
     private final int n;
     //    private int size;
     private final int[] ind;
@@ -18,8 +17,8 @@ public class IntHashMap {
     public IntHashMap(int bucketCount) {
         n = bucketCount;
         ind = new int[bucketCount];
-        keys = new int[bucketCount][INITIAL_BIN_CAPACITY];
-        values = new int[bucketCount][INITIAL_BIN_CAPACITY];
+        keys = new int[bucketCount][4];
+        values = new int[bucketCount][4];
     }
 
     public void put(int key, int value) {
