@@ -36,6 +36,7 @@ public class BugMover {
         prev_move = uc.getLocation().directionTo(fin);
         stuckCount = 0;
         attempts = 0;
+        minDist = INF;
 
         for (int i = Direction.values().length - 1; i >= 0; --i) {
             visited[i] = new IntHashMap(BUCKET_COUNT);
@@ -51,7 +52,7 @@ public class BugMover {
      * Recommends best direction to move to the provided location. If at the location, returns ZERO.
      * Uses bug 0 algorithm until it hits a loop, then uses bug 1 algorithm.
      * If the location is unreachable, will return Direction.ZERO
-     * Bug0 can be tested with the Flooded map
+     * Bug0 can be tested with the Flooded map. Bug1 can be tested on Comb.
      * @param fin Location to move to
      * @return direction to move in
      */
@@ -59,6 +60,12 @@ public class BugMover {
         // TODO: add an @param nullIfUnreachable whether to return null or Direction.ZERO if the location is unreachable
 
         if (!uc.canMove()) return Direction.ZERO;
+        if (!uc.canMove(Direction.NORTH) && !uc.canMove(Direction.NORTHEAST) &&
+                !uc.canMove(Direction.EAST) && !uc.canMove(Direction.SOUTHEAST) &&
+                !uc.canMove(Direction.SOUTH) && !uc.canMove(Direction.SOUTHWEST) &&
+                !uc.canMove(Direction.WEST) && !uc.canMove(Direction.NORTHWEST)) {
+            return Direction.ZERO;
+        }
 
         Location loc = uc.getLocation();
         if (target != fin) {
@@ -75,7 +82,6 @@ public class BugMover {
             }
 
             stage = 1;
-            minDist = INF;
             for (int i = Direction.values().length - 1; i >= 0; --i) {
                 visited[i] = new IntHashMap(BUCKET_COUNT);
             }
@@ -98,9 +104,11 @@ public class BugMover {
             uc.println("stage 2, fin, minDist " + fin + ", " + minDist);
             if (loc.distanceSquared(fin) <= minDist) {
                 stage = 0;
+                prev_move = loc.directionTo(fin);
                 for (int i = Direction.values().length - 1; i >= 0; --i) {
                     visited[i] = new IntHashMap(BUCKET_COUNT);
                 }
+
                 final Direction dir = move(fin);
                 if (dir != null) {
                     useDirection(dir);
@@ -115,13 +123,12 @@ public class BugMover {
         }
 
         // return ZERO to avoid making invalid moves
-        prev_move = Direction.ZERO;
         if (++stuckCount >= STUCK_THRESHOLD) {
             init(fin);
             ++attempts;  // TODO: once this is too high, assume the target is unreachable
             return move(fin);
         }
-        return prev_move;
+        return Direction.ZERO;
     }
 
     Direction bug0(Location fin) {
