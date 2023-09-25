@@ -212,7 +212,7 @@ public class Communications {
      */
     public int listEnemySightings() {
         final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
-        if (returnedLocations.length < totalEnemySightings) {
+        if (returnedLocations.length < totalEnemySightings || returnedUrgencies.length < totalEnemySightings) {
             returnedLocations = new Location[totalEnemySightings];
             returnedUrgencies = new int[totalEnemySightings];
         }
@@ -220,7 +220,8 @@ public class Communications {
         for (int i = totalEnemySightings - 1; i >= 0; --i) {
             if (readSightingProperty(i, ENEMY_URGENCY) > 0) {
                 returnedLocations[n] = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
-                returnedUrgencies[n++] = readSightingProperty(i, ENEMY_URGENCY) * 10 - uc.getLocation().distanceSquared(returnedLocations[n]);
+                returnedUrgencies[n] = readSightingProperty(i, ENEMY_URGENCY) * 10 - uc.getLocation().distanceSquared(returnedLocations[n]);
+                ++n;
             }
         }
         return n;
