@@ -38,7 +38,9 @@ abstract public class BasePlayer {
     UnitInfo[] senseAndReportEnemies() {
         UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
         for (int i = enemies.length - 1; i >= 0; --i) {
-            comms.reportEnemySighting(enemies[i].getLocation(), enemies[i].getType() == UnitType.BATTER ? 10 : 5);
+            if (enemies[i].getType() != UnitType.HQ) {
+                comms.reportEnemySighting(enemies[i].getLocation(), enemies[i].getType() == UnitType.BATTER ? 10 : 5);
+            }
             // TODO: tune urgency numbers, consider changing behaviors for different units doing the sensing
         }
         return enemies;

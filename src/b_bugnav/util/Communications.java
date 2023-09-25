@@ -221,6 +221,21 @@ public class Communications {
         return n;
     }
 
+    public void decayEnemySightingUrgencies() {
+        int hi = uc.read(ENEMY_SIGHTING_OFFSET) - 1;
+        for (int lo = 0; lo <= hi; ++lo) {
+            while (lo <= hi && readSightingProperty(hi, ENEMY_URGENCY) <= 0) --hi;
+            if (lo < hi && readSightingProperty(lo, ENEMY_URGENCY) <= 0) {
+                writeSightingProperty(lo, ENEMY_X, readSightingProperty(hi, ENEMY_X));
+                writeSightingProperty(lo, ENEMY_Y, readSightingProperty(hi, ENEMY_Y));
+                writeSightingProperty(lo, ENEMY_URGENCY, readSightingProperty(hi, ENEMY_URGENCY) - 1);
+            } else if (lo <= hi) {
+                writeSightingProperty(lo, ENEMY_URGENCY, readSightingProperty(lo, ENEMY_URGENCY) - 1);
+            }
+        }
+        uc.write(ENEMY_SIGHTING_OFFSET, hi + 1);
+    }
+
     private int readSightingProperty(int index, int property) {
         return uc.read(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property);
     }
