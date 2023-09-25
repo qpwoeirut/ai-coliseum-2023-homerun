@@ -204,6 +204,7 @@ public class Communications {
 
     /**
      * Lists all enemy sighting locations and urgencies.
+     * Urgencies take into account the distance between the unit and the enemy sighting
      * @return int: the number of enemy sightings
      * The enemy locations can be accessed in the public returnedLocations array.
      * The urgency of each sighting can be accessed in the public returnedUrgency array.
@@ -215,12 +216,13 @@ public class Communications {
         for (int i = totalEnemySightings - 1; i >= 0; --i) {
             if (readSightingProperty(i, ENEMY_URGENCY) > 0) {
                 returnedLocations[n] = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
-                returnedUrgencies[n++] = readSightingProperty(i, ENEMY_URGENCY);
+                returnedUrgencies[n++] = readSightingProperty(i, ENEMY_URGENCY) * 10 - uc.getLocation().distanceSquared(returnedLocations[n]);
             }
         }
         return n;
     }
 
+    // called once per round by the HQ
     public void decayEnemySightingUrgencies() {
         int hi = uc.read(ENEMY_SIGHTING_OFFSET) - 1;
         for (int lo = 0; lo <= hi; ++lo) {
