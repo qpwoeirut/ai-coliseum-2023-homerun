@@ -1,4 +1,4 @@
-package1=nullplayer
-package2=b_bugnav
-map=Flooded
+package1=demoplayer
+package2=c_betternav
+map=Comb
 seed=134
