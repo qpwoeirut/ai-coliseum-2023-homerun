@@ -145,7 +145,7 @@ public class Communications {
     }
 
     private int listUnclaimedObjects(int offset) {
-        int totalObjects = uc.read(offset);
+        final int totalObjects = uc.read(offset);
         if (returnedLocations.length < totalObjects) {
             returnedLocations = new Location[totalObjects];
             returnedIds = new int[totalObjects];
@@ -212,6 +212,10 @@ public class Communications {
      */
     public int listEnemySightings() {
         final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
+        if (returnedLocations.length < totalEnemySightings) {
+            returnedLocations = new Location[totalEnemySightings];
+            returnedUrgencies = new int[totalEnemySightings];
+        }
         int n = 0;
         for (int i = totalEnemySightings - 1; i >= 0; --i) {
             if (readSightingProperty(i, ENEMY_URGENCY) > 0) {
