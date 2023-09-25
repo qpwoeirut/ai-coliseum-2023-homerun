@@ -1,10 +1,10 @@
-package c_betternav;
+package c_moreaggressive;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.MapObject;
 import aic2023.user.UnitController;
-import c_betternav.util.Util;
+import c_moreaggressive.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
     PitcherPlayer(UnitController uc) {

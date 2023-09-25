@@ -1,4 +1,4 @@
-package c_betternav;
+package c_moreaggressive;
 
 import aic2023.user.*;
 

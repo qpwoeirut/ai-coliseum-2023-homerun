@@ -1,7 +1,7 @@
-package c_betternav;
+package c_moreaggressive;
 
 import aic2023.user.*;
-import c_betternav.util.Communications;
+import c_moreaggressive.util.Communications;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

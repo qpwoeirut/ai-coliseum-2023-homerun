@@ -1,7 +1,7 @@
-package c_betternav;
+package c_moreaggressive;
 
 import aic2023.user.*;
-import c_betternav.util.Util;
+import c_moreaggressive.util.Util;
 
 public class BatterPlayer extends BasePlayer {
     BatterPlayer(UnitController uc) {
