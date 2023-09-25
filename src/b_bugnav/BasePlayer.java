@@ -21,6 +21,20 @@ abstract public class BasePlayer {
         uc.move(bg.move(fin));
     }
 
+    Location [] senseAndReportBases ()
+    {
+        Location[] bases = uc.senseObjects(MapObject.BASE, VISION);
+        comms.reportNewBases(bases);
+        return bases;
+    }
+
+    Location [] senseAndReportStadiums ()
+    {
+        Location[] stadiums = uc.senseObjects(MapObject.STADIUM, VISION);
+        comms.reportNewStadiums(stadiums);
+        return stadiums;
+    }
+
     UnitInfo[] senseAndReportEnemies() {
         UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
         for (int i = enemies.length - 1; i >= 0; --i) {

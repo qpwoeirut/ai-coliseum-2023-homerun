@@ -2,13 +2,14 @@ package b_bugnav;
 
 import aic2023.user.*;
 import b_bugnav.util.Communications;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 public class BugMover {
 
     private final UnitController uc;
     private final Communications ct;
     private final int INF = 10000;
-    private int startvar = 0;
+    private boolean following_wall = false;
     private Direction prev_move = Direction.SOUTH;
     private final int [] perm = {1,2,0,5,4,6,7,3};
     BugMover(UnitController uc) {
@@ -20,12 +21,21 @@ public class BugMover {
     {
         Location loc = uc.getLocation();
         int minDist = INF;
-
-        if (uc.canMove(loc.directionTo(fin)))
+        // if youre not wall following at the moment and you can move on
+        if (!following_wall && uc.canMove(loc.directionTo(fin)))
         {
             prev_move = loc.directionTo(fin);
             return prev_move;
+        } else if (!following_wall)
+        {
+            following_wall = true;
         }
+
+        //check if you are at a corner
+
+        //if at an edge, move along the edge
+
+
 
         if (uc.canMove(prev_move))
         {
@@ -58,8 +68,6 @@ public class BugMover {
     {
 //        uc.println("startvar: " + startvar + " " + Direction.values()[startvar]);
         Location loc = uc.getLocation();
-        Location[] bases = uc.senseObjects(MapObject.BASE, INF);
-        Location[] stadiums = uc.senseObjects(MapObject.STADIUM, INF);
         int current_index = 0;
         for (int i = 0; i < 8; i++)
         {
@@ -84,15 +92,6 @@ public class BugMover {
         if (uc.canMove(prev_move))
         {
             return prev_move;
-        }
-        if (bases.length != 0)
-        {
-            //report existence of object
-            ct.reportNewBases(bases);
-        }
-        if (stadiums.length != 0)
-        {
-            ct.reportNewStadiums(stadiums);
         }
 
         Direction next_dir = Direction.values()[(current_index + 2) % 8];
@@ -123,7 +122,7 @@ public class BugMover {
         }
 
 //        float vision_range = uc.getType().getStat(UnitStat.VISION_RANGE);
-        for (int i = startvar; i < 8; i++)
+        for (int i = 0; i < 8; i++)
         {
             Direction current_dir = Direction.values()[i];
             if (!uc.canMove(current_dir))

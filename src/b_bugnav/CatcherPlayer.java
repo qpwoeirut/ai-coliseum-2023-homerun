@@ -11,6 +11,8 @@ public class CatcherPlayer extends BasePlayer {
         while (true) {
             comms.checkIn();
             senseAndReportEnemies();
+            senseAndReportBases();
+            senseAndReportStadiums();
 
             uc.move(bg.move_to_objects());
             uc.yield();
