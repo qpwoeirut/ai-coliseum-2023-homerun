@@ -29,7 +29,7 @@ public class BugMover {
     }
 
     void init(Location fin) {
-        uc.println("Setting target to " + fin);
+//        uc.println("Setting target to " + fin);
         target = fin;
         stage = 0;
 
@@ -69,13 +69,13 @@ public class BugMover {
 
         Location loc = uc.getLocation();
         if (!fin.isEqual(target)) {
-            uc.println("new target received");
+//            uc.println("new target received");
             init(fin);
         }
         visited[prev_move.ordinal()].put(Util.packLoc(loc), 1);
 
         if (stage == 0) {  // try bug0 first
-            uc.println("stage 0, fin " + fin);
+//            uc.println("stage 0, fin " + fin);
             final Direction dir = bug0(fin);
             if (dir != null) {
                 useDirection(dir);
@@ -88,7 +88,7 @@ public class BugMover {
             }
         }
         if (stage == 1) {  // bug0 has failed >:( try bug1
-            uc.println("stage 1, fin " + fin);
+//            uc.println("stage 1, fin " + fin);
             minDist = Math.min(minDist, loc.distanceSquared(fin));
             final Direction dir = wallFollow();
             if (dir != null) {
@@ -102,7 +102,7 @@ public class BugMover {
             }
         }
         if (stage == 2) {
-            uc.println("stage 2, fin, minDist " + fin + ", " + minDist);
+//            uc.println("stage 2, fin, minDist " + fin + ", " + minDist);
             if (loc.distanceSquared(fin) <= minDist) {
                 stage = 0;
                 prev_move = loc.directionTo(fin);
@@ -125,7 +125,7 @@ public class BugMover {
 
         // return ZERO to avoid making invalid moves
         if (++stuckCount >= STUCK_THRESHOLD) {
-            uc.println("Got stuck on attempt " + attempts + ", " + stuckCount + " times");
+//            uc.println("Got stuck on attempt " + attempts + ", " + stuckCount + " times");
             init(fin);
             ++attempts;  // TODO: once this is too high, assume the target is unreachable
             return move(fin);
