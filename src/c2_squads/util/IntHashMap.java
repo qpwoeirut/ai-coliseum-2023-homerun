@@ -1,4 +1,4 @@
-package c_moreaggressive.util;
+package c2_squads.util;
 
 import java.util.Arrays;
 

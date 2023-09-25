@@ -1,4 +1,4 @@
-package c_moreaggressive;
+package c2_squads;
 
 import aic2023.user.*;
 

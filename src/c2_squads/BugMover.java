@@ -1,10 +1,10 @@
-package c_moreaggressive;
+package c2_squads;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
-import c_moreaggressive.util.IntHashMap;
-import c_moreaggressive.util.Util;
+import c1_moreaggressive.util.Util;
+import c2_squads.util.IntHashMap;
 
 public class BugMover {
 

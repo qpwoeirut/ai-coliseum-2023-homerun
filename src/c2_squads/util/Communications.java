@@ -1,4 +1,4 @@
-package c_moreaggressive.util;
+package c2_squads.util;
 
 import aic2023.user.Location;
 import aic2023.user.UnitController;

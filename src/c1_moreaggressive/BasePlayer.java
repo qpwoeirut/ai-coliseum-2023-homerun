@@ -1,7 +1,7 @@
-package c_moreaggressive;
+package c1_moreaggressive;
 
 import aic2023.user.*;
-import c_moreaggressive.util.Communications;
+import c1_moreaggressive.util.Communications;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

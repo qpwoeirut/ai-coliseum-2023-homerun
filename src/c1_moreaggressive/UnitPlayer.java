@@ -1,4 +1,4 @@
-package c_moreaggressive;
+package c1_moreaggressive;
 
 import aic2023.user.UnitController;
 import aic2023.user.UnitType;
