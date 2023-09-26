@@ -93,15 +93,24 @@ public class Communications {
     }
 
     public void checkIn() {
-        final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
-        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
-        final int lastIndex = currentIndex - 4;
+        final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER :
+                (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER :
+                        (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
+
+        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 6 + typeNumber * 2; // 6 instead of 4 to account for two additional space for x and y coordinates for each unit.
+        final int lastIndex = currentIndex - 6; // 6 to align with the currentIndex change
         final int lastRoundCount = uc.read(lastIndex);
         uc.write(lastIndex, lastRoundCount - 1);
 
         final int currentRoundCount = uc.read(currentIndex);
         uc.write(currentIndex, currentRoundCount + 1);
+
+        // Store x and y coordinates of the unit's location.
+        Location loc = uc.getLocation(); // assuming getLocation gets the location of the unit
+        uc.write(currentIndex + 1, loc.x); // store x-coordinate
+        uc.write(currentIndex + 2, loc.y); // store y-coordinate
     }
+
 
     public int countBases() {
         return uc.read(BASE_OFFSET);
