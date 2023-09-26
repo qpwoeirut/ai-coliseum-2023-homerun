@@ -74,21 +74,6 @@ public class BatterPlayer extends BasePlayer {
                                     //Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
                                 }
                             }
-
-                            /*
-                            final int reportedEnemyCount = comms.listEnemySightings();
-                            final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                            if (targetEnemySightingIndex == -1) {
-                                Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
-                            } else {
-                                final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
-                                if (uc.canMove(toMove)) {
-                                    uc.move(toMove);
-                                } else {
-                                    Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
-                                }
-                            }
-                             */
                         }
                     }
 
@@ -122,14 +107,6 @@ public class BatterPlayer extends BasePlayer {
 
                         }
                     }
-
-                    /*
-                    if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= 18) {
-                        Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));//run away
-                    } else {
-                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));//run towards
-                    }
-                     */
                 }
             }
             uc.yield();
