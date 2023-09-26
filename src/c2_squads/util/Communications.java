@@ -216,7 +216,6 @@ public class Communications {
             returnedLocations = new Location[totalEnemySightings];
             returnedUrgencies = new int[totalEnemySightings];
         }
-        uc.println(totalEnemySightings + " " + returnedLocations.length + " " + returnedUrgencies.length);
         int n = 0;
         for (int i = totalEnemySightings - 1; i >= 0; --i) {
             if (readSightingProperty(i, ENEMY_URGENCY) > 0) {
