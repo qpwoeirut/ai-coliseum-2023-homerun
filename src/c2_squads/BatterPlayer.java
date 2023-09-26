@@ -4,11 +4,20 @@ import aic2023.user.*;
 import c2_squads.util.Util;
 
 public class BatterPlayer extends BasePlayer {
+
+    //Add functionality to claim a function
+    private Location patrolLoc;
     BatterPlayer(UnitController uc) {
         super(uc);
     }
+    BatterPlayer(UnitController uc, Location patrolLoc){
+        super(uc);
+        this.patrolLoc = patrolLoc;
+    }
 
     void run() {
+        final int PATROL_DISTANCE = 72;
+        final int IDLE_DISTANCE = 8;
         while (true) {
             comms.checkIn();
             senseAndReportBases();
@@ -22,31 +31,93 @@ public class BatterPlayer extends BasePlayer {
             }
 
             if (uc.canMove()) {
+
+                //normal behavior, follow and attack, otherwise move randomly
                 final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
                 final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
                 if (nearestEnemyBatter == null) {
-                    if (nearestEnemy != null) {
-                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-                    } else {
-                        final int reportedEnemyCount = comms.listEnemySightings();
-                        final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                        if (targetEnemySightingIndex == -1) {
-                            Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                    if (patrolLoc == null){
+                        if (nearestEnemy != null) {
+                            Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
                         } else {
-                            final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
-                            if (uc.canMove(toMove)) {
-                                uc.move(toMove);
+                            final int reportedEnemyCount = comms.listEnemySightings();
+                            final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
+                            if (targetEnemySightingIndex == -1) {
+                                Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
                             } else {
-                                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                                final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                                if (uc.canMove(toMove)) {
+                                    uc.move(toMove);
+                                } else {
+                                    Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                                }
                             }
                         }
                     }
-                } else {
-                    if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= 18) {
-                        Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
-                    } else {
+                    else{
+                        //try to go after unit sighted, within patrol zone
+                        if (nearestEnemy != null && uc.getLocation().distanceSquared(nearestEnemy.getLocation()) < PATROL_DISTANCE) {
+                            Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+                        } else {//no enemies within range
+                            //within idle zone
+                            if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                                //randomly move around in the zone
+                                Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                            }
+                            else{
+                                final Direction toMove = bg.move(patrolLoc);
+                                if (uc.canMove(toMove)) {
+                                    uc.move(toMove);
+                                } else {
+                                    uc.yield();
+                                    //Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                                }
+                            }
+                            //outside idle zone
+                            /*
+                            final int reportedEnemyCount = comms.listEnemySightings();
+                            final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
+                            if (targetEnemySightingIndex == -1) {
+                                Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                            } else {
+                                final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                                if (uc.canMove(toMove)) {
+                                    uc.move(toMove);
+                                } else {
+                                    Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                                }
+                            }
+                             */
+                        }
+                    }
+
+                } else {//there is an enemy batter nearby
+                    if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= PATROL_DISTANCE) {
                         Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));
                     }
+                    else{//enemy is out of range, so just chill in the zone
+                        if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                            //randomly move around in the zone
+                            Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                        }
+                        else{
+                            final Direction toMove = bg.move(patrolLoc);
+                            if (uc.canMove(toMove)) {
+                                uc.move(toMove);
+                            } else {
+                                uc.yield();
+                                //Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                            }
+                        }
+
+                    }
+                    /*
+                    if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= 18) {
+                        Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));//run away
+                    } else {
+                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));//run towards
+                    }
+                     */
                 }
             }
             uc.yield();
@@ -78,7 +149,8 @@ public class BatterPlayer extends BasePlayer {
         return toAttack;
     }
 
-    boolean attack(UnitInfo target) {  // return value current unused but might be useful later, will leave for now
+    boolean attack(UnitInfo target) {  //
+        // return value current unused but might be useful later, will leave for now
 //        uc.println("attack start " + uc.getEnergyUsed());
 
         final int val = directionToMoveToAttack(target);
