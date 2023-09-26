@@ -36,7 +36,7 @@ public class Communications {
     private final int ENEMY_X = 1;
     private final int ENEMY_Y = 2;
     private final int ENEMY_URGENCY = 3;
-    private final int ENEMY_MERGE_DISTANCE = 12;
+    private final int ENEMY_MERGE_DISTANCE = 30;
 
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
@@ -180,22 +180,33 @@ public class Communications {
         return uc.read(offset + OBJECT_SIZE * index + property);
     }
 
+    /**
+     * Records an enemy sighting. Will try to combine this sighting with an existing sighting, if a nearby one exists.
+     * Prioritizing combining first will ensure that we don't end up with too many items in the array.
+     * If no nearby sighting exists, will try to replace an old sighting. Otherwise will add to end of the array.
+     * @param loc     location where enemy was spotted
+     * @param urgency how urgently help is required (higher -> scarier)
+     */
     public void reportEnemySighting(Location loc, int urgency) {
         final int currentSightingCount = uc.read(ENEMY_SIGHTING_OFFSET);
         for (int i = currentSightingCount - 1; i >= 0; --i) {
-            final int oldUrgency = readSightingProperty(i, ENEMY_URGENCY);
-            if (oldUrgency <= 0) {  // sighting has decayed, we can replace it
-                writeSightingProperty(i, ENEMY_X, loc.x);
-                writeSightingProperty(i, ENEMY_Y, loc.y);
-                writeSightingProperty(i, ENEMY_URGENCY, urgency);
-                return;
-            } else if (loc.distanceSquared(new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y))) <= ENEMY_MERGE_DISTANCE) {
+            if (loc.distanceSquared(new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y))) <= ENEMY_MERGE_DISTANCE) {
+                final int oldUrgency = readSightingProperty(i, ENEMY_URGENCY);
                 // sightings are close enough that we can merge them
                 writeSightingProperty(i, ENEMY_URGENCY, (int)(Math.sqrt(oldUrgency * oldUrgency + urgency) + 0.999));  // TODO: is sqrt bytecode-expensive?
                 return;
             }
         }
+        for (int i = currentSightingCount - 1; i >= 0; --i) {
+            if (readSightingProperty(i, ENEMY_URGENCY) <= 0) {  // sighting has decayed, we can replace it
+                writeSightingProperty(i, ENEMY_X, loc.x);
+                writeSightingProperty(i, ENEMY_Y, loc.y);
+                writeSightingProperty(i, ENEMY_URGENCY, urgency);
+                return;
+            }
+        }
 
+//        uc.println("adding sighting on round " + uc.getRound() + " at " + loc + ". urgency " + urgency);
         writeSightingProperty(currentSightingCount, ENEMY_X, loc.x);
         writeSightingProperty(currentSightingCount, ENEMY_Y, loc.y);
         writeSightingProperty(currentSightingCount, ENEMY_URGENCY, urgency);
@@ -236,6 +247,7 @@ public class Communications {
                 writeSightingProperty(lo, ENEMY_X, readSightingProperty(hi, ENEMY_X));
                 writeSightingProperty(lo, ENEMY_Y, readSightingProperty(hi, ENEMY_Y));
                 writeSightingProperty(lo, ENEMY_URGENCY, readSightingProperty(hi, ENEMY_URGENCY) - 1);
+                --hi;
             } else if (lo <= hi) {
                 writeSightingProperty(lo, ENEMY_URGENCY, readSightingProperty(lo, ENEMY_URGENCY) - 1);
             }
