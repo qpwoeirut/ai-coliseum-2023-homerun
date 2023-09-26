@@ -1,4 +1,4 @@
-package d_player.util;
+package d_batterdensity.util;
 
 import aic2023.user.Location;
 import aic2023.user.UnitController;
@@ -37,13 +37,6 @@ public class Communications {
     private final int ENEMY_Y = 2;
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = 30;
-
-    private final int UNIT_OFFSET = 300000;
-     private final int UNIT_SIZE = 1;  // change this to # of properties
-    // enumerate property names here
-    // PROPERTY_NAME = 1
-    // PROPERTY_NAME = 2
-    // PROPERTY_NAME = 3
 
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
@@ -267,13 +260,5 @@ public class Communications {
     }
     private void writeSightingProperty(int index, int property, int value) {
         uc.write(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property, value);
-    }
-
-    // write public methods to read/write communications here
-    private int readUnitProperty(int unitId, int property) {
-        return uc.read(UNIT_OFFSET + UNIT_SIZE * unitId + property);
-    }
-    private void writeUnitProperty(int unitId, int property, int value) {
-        uc.write(UNIT_OFFSET + UNIT_SIZE * unitId + property, value);
     }
 }
