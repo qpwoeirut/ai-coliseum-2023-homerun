@@ -270,4 +270,23 @@ public class Communications {
     private void writeSightingProperty(int index, int property, int value) {
         uc.write(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property, value);
     }
+
+    public Location[] listFriendlyBatterPositions() {
+        int round = uc.getRound();
+        int offset = CHECK_IN_OFFSET + round * 24; // 24 spaces per round, 6 for each unit type
+        int batterOffset = offset + BATTER_NUMBER * 6; // 6 spaces for each batter: 1 for count, 2 for x-coordinate, and 2 for y-coordinate
+
+        int count = uc.read(batterOffset); // number of batters checked in this round
+
+        Location[] locations = new Location[count];
+
+        for(int i = 0; i < count; i++) {
+            int x = uc.read(batterOffset + 1 + i * 2); // 1 for count offset, i * 2 for the ith batter's x-coordinate
+            int y = uc.read(batterOffset + 2 + i * 2); // 2 for count and x-coordinate offset, i * 2 for the ith batter's y-coordinate
+            locations[i] = new Location(x, y);
+        }
+
+        return locations;
+    }
+
 }
