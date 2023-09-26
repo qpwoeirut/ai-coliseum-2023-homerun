@@ -1,8 +1,7 @@
 package c1_moreaggressive;
 
-import aic2023.user.Direction;
-import aic2023.user.Location;
-import aic2023.user.UnitController;
+import aic2023.user.*;
+import c1_moreaggressive.util.Util;
 
 public class CatcherPlayer extends BasePlayer {
     CatcherPlayer(UnitController uc) {
@@ -20,7 +19,11 @@ public class CatcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            senseAndReportEnemies();
+            final UnitInfo[] enemies = senseAndReportEnemies();
+            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
+            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 2) {
+                Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
+            }
 
             if (uc.isOutOfMap(uc.getLocation().add(scoutDir.dx * 3, scoutDir.dy * 3)) || --scoutTimer == 0) {
                 int shift = (int)(uc.getRandomDouble() * 6) + 1;
@@ -28,7 +31,7 @@ public class CatcherPlayer extends BasePlayer {
                 scoutDir = Direction.values()[(scoutDir.ordinal() + shift) % 8];
                 scoutTimer = SCOUT_TIMER;
             }
-            Direction dir = bg.move(spawn.add(scoutDir.dx * 55, scoutDir.dy * 55));
+            final Direction dir = bg.move(spawn.add(scoutDir.dx * 55, scoutDir.dy * 55));
             if (dir != null && dir != Direction.ZERO) {
                 uc.move(dir);
             }

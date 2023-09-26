@@ -1,9 +1,6 @@
 package c1_moreaggressive;
 
-import aic2023.user.Direction;
-import aic2023.user.Location;
-import aic2023.user.MapObject;
-import aic2023.user.UnitController;
+import aic2023.user.*;
 import c1_moreaggressive.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
@@ -19,7 +16,11 @@ public class PitcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            senseAndReportEnemies();
+            final UnitInfo[] enemies = senseAndReportEnemies();
+            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
+            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 2) {
+                Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
+            }
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
 
@@ -30,8 +31,8 @@ public class PitcherPlayer extends BasePlayer {
                     comms.updateClaimOnStadium(claimedObjectId);
                 }
                 if (!claimedObjectLocation.isEqual(uc.getLocation())) {
-                    Direction toMove = bg.move(claimedObjectLocation);
-                    if (uc.canMove(toMove)) {
+                    final Direction toMove = bg.move(claimedObjectLocation);
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
                         uc.move(toMove);
                     }
                 }
