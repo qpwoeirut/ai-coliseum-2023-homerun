@@ -1,7 +1,7 @@
 package c2_squads;
 
 import aic2023.user.*;
-import c1_moreaggressive.util.Util;
+import c2_squads.util.Util;
 
 public class BatterPlayer extends BasePlayer {
     BatterPlayer(UnitController uc) {
