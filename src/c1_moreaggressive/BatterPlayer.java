@@ -14,12 +14,13 @@ public class BatterPlayer extends BasePlayer {
             senseAndReportBases();
             senseAndReportStadiums();
 
-            UnitInfo[] enemies = senseAndReportEnemies();
+            UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
             final UnitInfo toAttack = pickTargetToAttack(enemies);
             if (toAttack != null) {
 //                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
                 attack(toAttack);
             }
+            enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
 
             if (uc.canMove()) {
                 final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
