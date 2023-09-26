@@ -15,6 +15,9 @@
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
       <excludeFolder url="file://$MODULE_DIR$/src/b_bugnav" />
+      <excludeFolder url="file://$MODULE_DIR$/src/c1_moreaggressive" />
+      <excludeFolder url="file://$MODULE_DIR$/src/c2_squads" />
+      <excludeFolder url="file://$MODULE_DIR$/src/c_merged" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
