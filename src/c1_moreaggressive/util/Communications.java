@@ -193,7 +193,7 @@ public class Communications {
             if (loc.distanceSquared(new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y))) <= ENEMY_MERGE_DISTANCE) {
                 final int oldUrgency = readSightingProperty(i, ENEMY_URGENCY);
                 // sightings are close enough that we can merge them
-                writeSightingProperty(i, ENEMY_URGENCY, (int)(Math.sqrt(oldUrgency * oldUrgency + urgency) + 0.999));  // TODO: is sqrt bytecode-expensive?
+                writeSightingProperty(i, ENEMY_URGENCY, (int)(Math.cbrt(oldUrgency * oldUrgency * oldUrgency + urgency * urgency * urgency) + 0.999));  // TODO: is cbrt bytecode-expensive?
                 return;
             }
         }
