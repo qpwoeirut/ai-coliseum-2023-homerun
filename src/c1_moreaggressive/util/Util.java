@@ -57,6 +57,41 @@ public class Util {
         }
         return closestIndex;
     }
+    public static int getNearestDistance(Location loc, UnitInfo[] units, UnitType type) {
+        int minDist = 10000;
+        for (int i = units.length - 1; i >= 0; --i) {
+            if (units[i].getType() == type && minDist > loc.distanceSquared(units[i].getLocation())) {
+                minDist = loc.distanceSquared(units[i].getLocation());
+            }
+        }
+        return minDist;
+    }
+
+    public static UnitInfo getNearestChebyshev(Location loc, UnitInfo[] units, UnitType type) {
+        int minDist = 10000;
+        UnitInfo closest = null;
+        for (int i = units.length - 1; i >= 0; --i) {
+            if (units[i].getType() == type && minDist > chebyshevDistance(loc, units[i].getLocation())) {
+                minDist = chebyshevDistance(loc, units[i].getLocation());
+                closest = units[i];
+            }
+        }
+        return closest;
+    }
+    // https://en.wikipedia.org/wiki/Chebyshev_distance
+    public static int getNearestChebyshevDistance(Location loc, UnitInfo[] units, UnitType type) {
+        int minDist = 10000;
+        for (int i = units.length - 1; i >= 0; --i) {
+            if (units[i].getType() == type && minDist > chebyshevDistance(loc, units[i].getLocation())) {
+                minDist = chebyshevDistance(loc, units[i].getLocation());
+            }
+        }
+        return minDist;
+    }
+
+    public static int chebyshevDistance(Location a, Location b) {
+        return Math.max(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y);
+    }
 
     public static int getMaxIndex(int[] values, int n) {
         if (n <= 0) return -1;
