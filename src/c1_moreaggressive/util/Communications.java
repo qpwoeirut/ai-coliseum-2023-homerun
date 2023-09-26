@@ -146,7 +146,7 @@ public class Communications {
 
     private int listUnclaimedObjects(int offset) {
         final int totalObjects = uc.read(offset);
-        if (returnedLocations.length < totalObjects) {
+        if (returnedLocations.length < totalObjects || returnedIds.length < totalObjects) {
             returnedLocations = new Location[totalObjects];
             returnedIds = new int[totalObjects];
         }
