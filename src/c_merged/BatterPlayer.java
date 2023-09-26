@@ -4,6 +4,9 @@ import aic2023.user.*;
 import c_merged.util.Util;
 
 public class BatterPlayer extends BasePlayer {
+    // Add functionality to claim a function
+    private Location patrolLoc = null;  // location the batter should hover around
+
     BatterPlayer(UnitController uc) {
         super(uc);
     }
@@ -23,27 +26,38 @@ public class BatterPlayer extends BasePlayer {
             enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
 
             if (uc.canMove()) {
-                final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-                final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-                if (nearestEnemyBatter == null) {
-                    if (nearestEnemy != null) {
-                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-                    } else {
-                        final int reportedEnemyCount = comms.listEnemySightings();
-                        final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                        if (targetEnemySightingIndex == -1) {
-                            Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
-                        } else {
-                            final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
-                            if (uc.canMove(toMove)) {
-                                uc.move(toMove);
-                            } else {
-                                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
-                            }
-                        }
-                    }
+                if (patrolLoc != null) {
+                    patrol(enemies);
                 } else {
-                    // TODO: move batters in knight's move shapes. until then we should probably just run away
+                    normalBehavior(enemies);
+                }
+            }
+            uc.yield();
+        }
+    }
+
+    void normalBehavior(UnitInfo[] enemies) {
+        final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
+        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+        if (nearestEnemyBatter == null) {
+            if (nearestEnemy != null) {
+                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+            } else {
+                final int reportedEnemyCount = comms.listEnemySightings();
+                final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
+                if (targetEnemySightingIndex == -1) {
+                    Util.tryMoveInDirection(uc, Direction.values()[(int) (uc.getRandomDouble() * 8)]);
+                } else {
+                    final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                    if (uc.canMove(toMove)) {
+                        uc.move(toMove);
+                    } else {
+                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                    }
+                }
+            }
+        } else {
+            // TODO: move batters in knight's move shapes. until then we should probably just run away
 //                    UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
 //                    int batters = 0, catchers = 0, pitchers = 0, hq = 0;
 //                    for (int i = allies.length - 1; i >= 0; --i) {
@@ -55,19 +69,60 @@ public class BatterPlayer extends BasePlayer {
 //                    if (batters > 1 || pitchers > 0 || hq > 0) {  // just attack or smth, its probably fine
 //                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
 //                    } else {
-                    for (int i = 7; i >= 0; --i) {
-                        if (uc.canMove(Direction.values()[i]) && Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER) > 1) {
-                            // 8 is the maximum batter range: one step plus one swing
-                            uc.move(Direction.values()[i]);
-                            break;
-                        }
-                    }
-                    // as a backup just run away
-                    Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
-//                    }
+            for (int i = 7; i >= 0; --i) {
+                if (uc.canMove(Direction.values()[i]) && Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER) > 1) {
+                    // 8 is the maximum batter range: one step plus one swing
+                    uc.move(Direction.values()[i]);
+                    break;
                 }
             }
-            uc.yield();
+            // as a backup just run away
+            Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
+        }
+    }
+
+    void patrol(UnitInfo[] enemies) {
+        final int PATROL_DISTANCE = 72;  // range it can go to attack other units, relative to patrolLoc
+        final int IDLE_DISTANCE = 8;  // range the batter should stay in the designated patrol location, when no enemies
+        final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
+        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+        if (nearestEnemyBatter == null) {
+            //try to go after unit sighted, within patrol zone
+            if (nearestEnemy != null && uc.getLocation().distanceSquared(nearestEnemy.getLocation()) < PATROL_DISTANCE) {
+                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+            } else {//no enemies within range
+                //within idle zone
+                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                    //randomly move around in the zone
+                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                }
+                //outside idle zone
+                else{
+                    final Direction toMove = bg.move(patrolLoc);
+                    if (uc.canMove(toMove)) {
+                        uc.move(toMove);
+                    }
+                }
+            }
+        } else {
+            if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= PATROL_DISTANCE) {
+                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));
+            }
+            else{//enemy is out of range, so just chill in the zone
+                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                    //randomly move around in the zone
+                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                }
+                else{
+                    final Direction toMove = bg.move(patrolLoc);
+                    if (uc.canMove(toMove)) {
+                        uc.move(toMove);
+                    } else {
+                        uc.yield();
+                        //Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                    }
+                }
+            }
         }
     }
 
@@ -161,19 +216,19 @@ public class BatterPlayer extends BasePlayer {
 
             if (uc.isOutOfMap(loc)) {
 //                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
-                return (int)target.getType().getStat(UnitStat.REP_COST);
+                return (int) target.getType().getStat(UnitStat.REP_COST);
             }
 
             final MapObject map = uc.senseObjectAtLocation(loc, true);
             if (map == MapObject.BALL || map == MapObject.WATER) {
 //                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
-                return (int)target.getType().getStat(UnitStat.REP_COST);
+                return (int) target.getType().getStat(UnitStat.REP_COST);
             }
 
             final UnitInfo unit = uc.senseUnitAtLocation(loc);
             if (unit != null) {
 //                uc.println("hitEffectiveness end " + uc.getEnergyUsed());
-                return (int)target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int)unit.getType().getStat(UnitStat.REP_COST);
+                return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
             }
         }
 
