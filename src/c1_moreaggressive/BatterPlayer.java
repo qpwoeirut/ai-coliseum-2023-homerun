@@ -43,11 +43,28 @@ public class BatterPlayer extends BasePlayer {
                         }
                     }
                 } else {
-                    if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= 18) {
-                        Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
-                    } else {
-                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));
+                    // TODO: move batters in knight's move shapes. until then we should probably just run away
+//                    UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
+//                    int batters = 0, catchers = 0, pitchers = 0, hq = 0;
+//                    for (int i = allies.length - 1; i >= 0; --i) {
+//                        if (allies[i].getType() == UnitType.BATTER) ++batters;
+//                        else if (allies[i].getType() == UnitType.CATCHER) ++catchers;
+//                        else if (allies[i].getType() == UnitType.PITCHER) ++pitchers;
+//                        else ++hq;
+//                    }
+//                    if (batters > 1 || pitchers > 0 || hq > 0) {  // just attack or smth, its probably fine
+//                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+//                    } else {
+                    for (int i = 7; i >= 0; --i) {
+                        if (uc.canMove(Direction.values()[i]) && Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER) > 1) {
+                            // 8 is the maximum batter range: one step plus one swing
+                            uc.move(Direction.values()[i]);
+                            break;
+                        }
                     }
+                    // as a backup just run away
+                    Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
+//                    }
                 }
             }
             uc.yield();
