@@ -54,11 +54,18 @@ public class HqPlayer extends BasePlayer {
                 }
             }
 
-            if (comms.countBases() + comms.countStadiums() > comms.countPitchers()) {
+            if (enemyBattersNearby) {
+                while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitNextToEnemy(UnitType.BATTER, hasEnemyBatter)) {
+                    // recruit batters to hit the nearby enemy batters
+                }
+                while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitRandomly(UnitType.BATTER)) {
+                    // then just recruit batters in general
+                }
+            } else if (comms.countBases() + comms.countStadiums() > comms.countPitchers()) {
                 while (uc.getReputation() >= UnitType.PITCHER.getStat(UnitStat.REP_COST) && recruitUnitSafely(UnitType.PITCHER, hasEnemyBatter)) {
                     // recruitUnitSafely will spawn units until we can't anymore
                 }
-            } else if (enemyBattersNearby || comms.countBatters() <= comms.countCatchers() * 4) {
+            } else if (comms.countBatters() <= comms.countCatchers() * 4) {
                 recruitUnitSafely(UnitType.BATTER, hasEnemyBatter);
             } else {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
@@ -88,10 +95,74 @@ public class HqPlayer extends BasePlayer {
         return false;
     }
 
+    boolean recruitUnitNextToEnemy(UnitType type, boolean[][] hasEnemyBatter) {
+        for (int i = 7; i >= 0; --i) {
+            if (uc.canRecruitUnit(type, Direction.values()[i]) && directionAdjacentToEnemy(Direction.values()[i], hasEnemyBatter)) {
+                uc.recruitUnit(type, Direction.values()[i]);
+                return true;
+            }
+        }
+        for (int i = 7; i >= 0; --i) {
+            if (uc.canRecruitUnit(type, Direction.values()[i]) && !directionIsSafe(Direction.values()[i], hasEnemyBatter)) {
+                uc.recruitUnit(type, Direction.values()[i]);
+                return true;
+            }
+        }
+        // TODO: experiment with scheduling?
+        return false;
+    }
+
+    // this isnt actually random, just statically shuffled, but hopefully it should be fine
+    boolean recruitUnitRandomly(UnitType type) {
+        if (uc.canRecruitUnit(type, Direction.NORTHEAST)) {
+            uc.recruitUnit(type, Direction.NORTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTH)) {
+            uc.recruitUnit(type, Direction.SOUTH);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.WEST)) {
+            uc.recruitUnit(type, Direction.WEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHEAST)) {
+            uc.recruitUnit(type, Direction.SOUTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTHWEST)) {
+            uc.recruitUnit(type, Direction.NORTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHWEST)) {
+            uc.recruitUnit(type, Direction.SOUTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTH)) {
+            uc.recruitUnit(type, Direction.NORTH);
+            return true;
+        }
+        return false;
+    }
+
+    boolean directionAdjacentToEnemy(Direction dir, boolean[][] hasEnemyBatter) {
+        final int x = OFFSET + dir.dx;
+        final int y = OFFSET + dir.dy;
+        return hasEnemyBatter[x - 1][y - 1] || hasEnemyBatter[x - 1][y] || hasEnemyBatter[x - 1][y + 1] ||
+               hasEnemyBatter[x    ][y - 1] || hasEnemyBatter[x    ][y] || hasEnemyBatter[x    ][y + 1] ||
+               hasEnemyBatter[x + 1][y - 1] || hasEnemyBatter[x + 1][y] || hasEnemyBatter[x + 1][y + 1];
+    }
+
     boolean directionIsSafe(Direction dir, boolean[][] hasEnemyBatter) {
+        final int x = OFFSET + dir.dx;
+        final int y = OFFSET + dir.dy;
         for (int dx = -2; dx <= 2; ++dx) {
-            for (int dy = -2; dy <= 2; ++dy) {
-                if (hasEnemyBatter[dx + dir.dx + OFFSET][dy + dir.dy + OFFSET]) return false;
+            if (hasEnemyBatter[x + dx][y - 2] ||
+                    hasEnemyBatter[x + dx][y - 1] ||
+                    hasEnemyBatter[x + dx][y    ] ||
+                    hasEnemyBatter[x + dx][y + 1] ||
+                    hasEnemyBatter[x + dx][y + 2]) {
+                return false;
             }
         }
         return true;
