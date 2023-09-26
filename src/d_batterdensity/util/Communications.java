@@ -128,9 +128,9 @@ public class Communications {
         return countUnits(PITCHER_NUMBER);
     }
     private int countUnits(int typeNumber) {
-        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
-        final int lastIndex = currentIndex - 4;
-        return uc.read(lastIndex) + uc.read(currentIndex);
+        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 24 + typeNumber * 6;
+        final int lastIndex = currentIndex - 24; // space allocated per round
+        return uc.read(currentIndex) + uc.read(lastIndex);
     }
 
     /**
