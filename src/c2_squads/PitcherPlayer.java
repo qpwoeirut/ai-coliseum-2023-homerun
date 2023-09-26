@@ -4,7 +4,7 @@ import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.MapObject;
 import aic2023.user.UnitController;
-import c1_moreaggressive.util.Util;
+import c2_squads.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
     PitcherPlayer(UnitController uc) {
