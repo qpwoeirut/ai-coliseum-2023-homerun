@@ -1,4 +1,4 @@
-package d_player.util;
+package d_batterdensity.util;
 
 import aic2023.user.Location;
 import aic2023.user.UnitController;
@@ -37,13 +37,6 @@ public class Communications {
     private final int ENEMY_Y = 2;
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = 30;
-
-    private final int UNIT_OFFSET = 300000;
-     private final int UNIT_SIZE = 1;  // change this to # of properties
-    // enumerate property names here
-    // PROPERTY_NAME = 1
-    // PROPERTY_NAME = 2
-    // PROPERTY_NAME = 3
 
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
@@ -100,15 +93,24 @@ public class Communications {
     }
 
     public void checkIn() {
-        final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
-        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
-        final int lastIndex = currentIndex - 4;
+        final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER :
+                (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER :
+                        (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
+
+        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 6 + typeNumber * 2; // 6 instead of 4 to account for two additional space for x and y coordinates for each unit.
+        final int lastIndex = currentIndex - 6; // 6 to align with the currentIndex change
         final int lastRoundCount = uc.read(lastIndex);
         uc.write(lastIndex, lastRoundCount - 1);
 
         final int currentRoundCount = uc.read(currentIndex);
         uc.write(currentIndex, currentRoundCount + 1);
+
+        // Store x and y coordinates of the unit's location.
+        Location loc = uc.getLocation(); // assuming getLocation gets the location of the unit
+        uc.write(currentIndex + 1, loc.x); // store x-coordinate
+        uc.write(currentIndex + 2, loc.y); // store y-coordinate
     }
+
 
     public int countBases() {
         return uc.read(BASE_OFFSET);
@@ -126,9 +128,9 @@ public class Communications {
         return countUnits(PITCHER_NUMBER);
     }
     private int countUnits(int typeNumber) {
-        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
-        final int lastIndex = currentIndex - 4;
-        return uc.read(lastIndex) + uc.read(currentIndex);
+        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 24 + typeNumber * 6;
+        final int lastIndex = currentIndex - 24; // space allocated per round
+        return uc.read(currentIndex) + uc.read(lastIndex);
     }
 
     /**
@@ -269,11 +271,22 @@ public class Communications {
         uc.write(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property, value);
     }
 
-    // write public methods to read/write communications here
-    private int readUnitProperty(int unitId, int property) {
-        return uc.read(UNIT_OFFSET + UNIT_SIZE * unitId + property);
+    public Location[] listFriendlyBatterPositions() {
+        int round = uc.getRound();
+        int offset = CHECK_IN_OFFSET + round * 24; // 24 spaces per round, 6 for each unit type
+        int batterOffset = offset + BATTER_NUMBER * 6; // 6 spaces for each batter: 1 for count, 2 for x-coordinate, and 2 for y-coordinate
+
+        int count = uc.read(batterOffset); // number of batters checked in this round
+
+        Location[] locations = new Location[count];
+
+        for(int i = 0; i < count; i++) {
+            int x = uc.read(batterOffset + 1 + i * 2); // 1 for count offset, i * 2 for the ith batter's x-coordinate
+            int y = uc.read(batterOffset + 2 + i * 2); // 2 for count and x-coordinate offset, i * 2 for the ith batter's y-coordinate
+            locations[i] = new Location(x, y);
+        }
+
+        return locations;
     }
-    private void writeUnitProperty(int unitId, int property, int value) {
-        uc.write(UNIT_OFFSET + UNIT_SIZE * unitId + property, value);
-    }
+
 }
