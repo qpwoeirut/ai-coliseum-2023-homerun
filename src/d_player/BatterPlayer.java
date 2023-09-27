@@ -16,14 +16,22 @@ public class BatterPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
+            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
-            final UnitInfo toAttack = pickTargetToAttack(enemies);
-            if (toAttack != null) {
+            debug("Enemies: " + enemies.length);
+            if (uc.canAct()) {
+                final UnitInfo toAttack = pickTargetToAttack(enemies);
+                debugBytecode("after pickTarget");
+                if (toAttack != null) {
 //                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
-                attack(toAttack);
+                    attack(toAttack);
+                    enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
+                } else {
+                    comms.reportEnemySightings(enemies, URGENCY_FACTOR);
+                }
             }
-            enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
+            debugBytecode("after attack");
 
             if (uc.canMove()) {
                 if (patrolLoc != null) {
@@ -37,16 +45,46 @@ public class BatterPlayer extends BasePlayer {
     }
 
     void normalBehavior(UnitInfo[] enemies) {
+        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-        if (nearestEnemyBatter == null) {
-            if (nearestEnemy != null) {
+        if (nearestEnemyBatter != null && Util.batterMayInteract(uc, nearestEnemyBatter.getLocation())) {
+            uc.println("enemy at " + nearestEnemyBatter.getLocation());
+            // TODO: move batters in knight's move shapes. until then we should probably just run away
+//            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
+//            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
+//            for (int i = allies.length - 1; i >= 0; --i) {
+//                if (allies[i].getType() == UnitType.BATTER) ++batters;
+//                else if (allies[i].getType() == UnitType.CATCHER) ++catchers;
+//                else if (allies[i].getType() == UnitType.PITCHER) ++pitchers;
+//                else ++hq;
+//            }
+//            if (batters > 1 || pitchers > 0 || hq > 0) {  // just attack or smth, its probably fine
+//                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+//            }
+
+            int bestDir = Direction.ZERO.ordinal();
+            int bestChebyshevDist = Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation());
+            for (int i = 7; i >= 0; --i) {
+                if (uc.canMove(Direction.values()[i])) {
+                    final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
+                    if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance >= 2) {
+                        bestChebyshevDist = nearestChebyshevDistance;
+                        bestDir = i;
+                    }
+                }
+            }
+            if (uc.canMove(Direction.values()[bestDir])) {
+                uc.move(Direction.values()[bestDir]);
+            }
+        } else {
+            final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+            if (nearestEnemy != null && Util.batterMayInteract(uc, nearestEnemy.getLocation())) {
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();
                 final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
                 if (targetEnemySightingIndex == -1) {
-                    Util.tryMoveInDirection(uc, Direction.values()[(int) (uc.getRandomDouble() * 8)]);
+                    Util.tryMoveInDirection(uc, spreadOut());
                 } else {
                     final Direction toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
                     if (uc.canMove(toMove)) {
@@ -56,29 +94,8 @@ public class BatterPlayer extends BasePlayer {
                     }
                 }
             }
-        } else {
-            // TODO: move batters in knight's move shapes. until then we should probably just run away
-//                    UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
-//                    int batters = 0, catchers = 0, pitchers = 0, hq = 0;
-//                    for (int i = allies.length - 1; i >= 0; --i) {
-//                        if (allies[i].getType() == UnitType.BATTER) ++batters;
-//                        else if (allies[i].getType() == UnitType.CATCHER) ++catchers;
-//                        else if (allies[i].getType() == UnitType.PITCHER) ++pitchers;
-//                        else ++hq;
-//                    }
-//                    if (batters > 1 || pitchers > 0 || hq > 0) {  // just attack or smth, its probably fine
-//                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-//                    } else {
-            for (int i = 7; i >= 0; --i) {
-                if (uc.canMove(Direction.values()[i]) && Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER) > 1) {
-                    // 8 is the maximum batter range: one step plus one swing
-                    uc.move(Direction.values()[i]);
-                    break;
-                }
-            }
-            // as a backup just run away
-            Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
         }
+        debugBytecode("end normalBehavior");
     }
 
     void patrol(UnitInfo[] enemies) {
@@ -127,12 +144,12 @@ public class BatterPlayer extends BasePlayer {
     }
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
-        if (!uc.canAct()) return null;
-//        uc.println("pickTarget start " + uc.getEnergyUsed());
+        debugBytecode("pickTarget start");
 
         UnitInfo toAttack = null;
         int bestAttackScore = -1;
         for (int i = enemies.length - 1; i >= 0; --i) {
+            if (enemies[i].getType() == UnitType.HQ || Util.chebyshevDistance(uc.getLocation(), enemies[i].getLocation()) > 2) continue;
             final int val = directionToMoveToAttack(enemies[i]);
             if (val != -1) {
                 // score by attack effectiveness (how much net reputation we gain), tiebreak by closest enemy
@@ -147,7 +164,7 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-//        uc.println("pickTarget end " + uc.getEnergyUsed());
+        debugBytecode("pickTarget end");
         return toAttack;
     }
 
@@ -174,15 +191,16 @@ public class BatterPlayer extends BasePlayer {
     }
 
     int directionToMoveToAttack(UnitInfo target) {
-//        uc.println("directionToMove start " + uc.getEnergyUsed());
+        debugBytecode("directionToMove start");
         if (!uc.canMove()) {
-            if (uc.getLocation().distanceSquared(target.getLocation()) <= 2) {
+            if (Util.chebyshevDistance(uc.getLocation(), target.getLocation()) <= 1) {
                 final int effectiveness = hitEffectiveness(target, uc.getLocation().directionTo(target.getLocation()));
                 if (effectiveness >= 0) {
+                    debugBytecode("directionToMove end0");
                     return effectiveness * 9 + Direction.ZERO.ordinal();
                 }
             }
-//            uc.println("directionToMove end " + uc.getEnergyUsed());
+            debugBytecode("directionToMove end1");
             return -1;
         }
 
@@ -190,22 +208,24 @@ public class BatterPlayer extends BasePlayer {
         int bestEffectiveness = -1;
         // try cardinal directions first so that move cooldown is smaller
         for (int i = 8; i >= 0; --i) {
-            final Location loc = uc.getLocation().add(Direction.values()[i]);
-            if (uc.canMove(Direction.values()[i]) && loc.distanceSquared(target.getLocation()) <= 2) {
-                int effectiveness = hitEffectiveness(target, loc.directionTo(target.getLocation()));
-                if (bestEffectiveness < effectiveness) {
-                    bestEffectiveness = effectiveness;
-                    bestDir = i;
+            if (uc.canMove(Direction.values()[i])) {
+                final Location loc = uc.getLocation().add(Direction.values()[i]);
+                if (loc.distanceSquared(target.getLocation()) <= 2) {
+                    final int effectiveness = hitEffectiveness(target, loc.directionTo(target.getLocation()));
+                    if (bestEffectiveness < effectiveness) {
+                        bestEffectiveness = effectiveness;
+                        bestDir = i;
+                    }
                 }
             }
         }
 
-//        uc.println("directionToMove end " + uc.getEnergyUsed());
+        debugBytecode("directionToMove end2");
         return bestEffectiveness * 9 + bestDir;
     }
 
     int hitEffectiveness(UnitInfo target, Direction dir) {
-//        uc.println("hitEffectiveness start " + uc.getEnergyUsed());
+        debugBytecode("hitEffectiveness start");
 
         Location loc = target.getLocation();
         for (int i = 0; i < GameConstants.MAX_STRENGTH; ++i) {
@@ -232,7 +252,30 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-//        uc.println("hitEffectiveness end " + uc.getEnergyUsed());
+        debugBytecode("hitEffectiveness end");
         return 0;
+    }
+
+    Direction spreadOut() {
+        final Location currentLocation = uc.getLocation();
+        float x = currentLocation.x, y = currentLocation.y;
+        UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
+        float dist;
+        float allyWeightX = 0, allyWeightY = 0;
+        Location loc;
+        for (int i = allies.length; i --> 0;) {
+            loc = allies[i].getLocation();
+            // add one to avoid div by 0 when running out of bytecode
+            dist = currentLocation.distanceSquared(loc) + 1;
+            // subtract since we want to move away
+            allyWeightX -= (loc.x - x) / dist;
+            allyWeightY -= (loc.y - y) / dist;
+        }
+        float weightX = allyWeightX * 10;
+        float weightY = allyWeightY * 10;
+
+        int finalDx = uc.getRandomDouble() * 10 > weightX + 5 ? -1 : 1;
+        int finalDy = uc.getRandomDouble() * 10 > weightY + 5 ? -1 : 1;
+        return Direction.getDirection(finalDx, finalDy);
     }
 }
