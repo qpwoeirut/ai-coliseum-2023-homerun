@@ -16,13 +16,13 @@ public class BatterPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            debugBytecode("after reporting bases/stadiums");
+//            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
-            debug("Enemies: " + enemies.length);
+//            debug("Enemies: " + enemies.length);
             if (uc.canAct()) {
                 final UnitInfo toAttack = pickTargetToAttack(enemies);
-                debugBytecode("after pickTarget");
+//                debugBytecode("after pickTarget");
                 if (toAttack != null) {
 //                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
                     attack(toAttack);
@@ -31,7 +31,7 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
-            debugBytecode("after attack");
+//            debugBytecode("after attack");
 
             if (uc.canMove()) {
                 if (patrolLoc != null) {
@@ -45,10 +45,10 @@ public class BatterPlayer extends BasePlayer {
     }
 
     void normalBehavior(UnitInfo[] enemies) {
-        debugBytecode("start normalBehavior");
+//        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && Util.batterMayInteract(uc, nearestEnemyBatter.getLocation())) {
-            uc.println("enemy at " + nearestEnemyBatter.getLocation());
+//            uc.println("enemy at " + nearestEnemyBatter.getLocation());
             // TODO: move batters in knight's move shapes. until then we should probably just run away
 //            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
 //            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
@@ -95,7 +95,7 @@ public class BatterPlayer extends BasePlayer {
                 }
             }
         }
-        debugBytecode("end normalBehavior");
+//        debugBytecode("end normalBehavior");
     }
 
     void patrol(UnitInfo[] enemies) {
@@ -144,7 +144,7 @@ public class BatterPlayer extends BasePlayer {
     }
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
-        debugBytecode("pickTarget start");
+//        debugBytecode("pickTarget start");
 
         UnitInfo toAttack = null;
         int bestAttackScore = -1;
@@ -164,7 +164,7 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-        debugBytecode("pickTarget end");
+//        debugBytecode("pickTarget end");
         return toAttack;
     }
 
@@ -191,16 +191,16 @@ public class BatterPlayer extends BasePlayer {
     }
 
     int directionToMoveToAttack(UnitInfo target) {
-        debugBytecode("directionToMove start");
+//        debugBytecode("directionToMove start");
         if (!uc.canMove()) {
             if (Util.chebyshevDistance(uc.getLocation(), target.getLocation()) <= 1) {
                 final int effectiveness = hitEffectiveness(target, uc.getLocation().directionTo(target.getLocation()));
                 if (effectiveness >= 0) {
-                    debugBytecode("directionToMove end0");
+//                    debugBytecode("directionToMove end0");
                     return effectiveness * 9 + Direction.ZERO.ordinal();
                 }
             }
-            debugBytecode("directionToMove end1");
+//            debugBytecode("directionToMove end1");
             return -1;
         }
 
@@ -220,12 +220,12 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-        debugBytecode("directionToMove end2");
+//        debugBytecode("directionToMove end2");
         return bestEffectiveness * 9 + bestDir;
     }
 
     int hitEffectiveness(UnitInfo target, Direction dir) {
-        debugBytecode("hitEffectiveness start");
+//        debugBytecode("hitEffectiveness start");
 
         Location loc = target.getLocation();
         for (int i = 0; i < GameConstants.MAX_STRENGTH; ++i) {
@@ -252,7 +252,7 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-        debugBytecode("hitEffectiveness end");
+//        debugBytecode("hitEffectiveness end");
         return 0;
     }
 

@@ -190,13 +190,13 @@ public class Communications {
      * @param urgencyFactor how urgently help is required (higher -> scarier)
      */
     public void reportEnemySightings(UnitInfo[] enemies, int urgencyFactor) {
-        if (uc.getRound() >= 1450) uc.println("start reportEnemySighting " + uc.getEnergyUsed());
+//        if (uc.getRound() >= 1450) uc.println("start reportEnemySighting " + uc.getEnergyUsed());
         final int currentSightingCount = uc.read(ENEMY_SIGHTING_OFFSET);
 
         int idx = enemies.length - 1;
         if (idx < 0) return;
         for (int i = currentSightingCount - 1; i >= 0; --i) {
-            if (uc.getRound() >= 1450) uc.println(i + " " + uc.getEnergyUsed());
+//            if (uc.getRound() >= 1450) uc.println(i + " " + uc.getEnergyUsed());
             while (enemies[idx].getLocation().distanceSquared(new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y))) <= ENEMY_MERGE_DISTANCE) {
                 final int oldUrgency = readSightingProperty(i, ENEMY_URGENCY);
                 // sightings are close enough that we can merge them
@@ -207,7 +207,7 @@ public class Communications {
             }
         }
         for (int i = currentSightingCount - 1; i >= 0; --i) {
-            if (uc.getRound() >= 1450) uc.println(i + " " + uc.getEnergyUsed());
+//            if (uc.getRound() >= 1450) uc.println(i + " " + uc.getEnergyUsed());
             if (readSightingProperty(i, ENEMY_URGENCY) <= 0) {  // sighting has decayed, we can replace it
                 writeSightingProperty(i, ENEMY_X, enemies[idx].getLocation().x);
                 writeSightingProperty(i, ENEMY_Y, enemies[idx].getLocation().y);
