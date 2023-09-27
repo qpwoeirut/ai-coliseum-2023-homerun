@@ -18,6 +18,8 @@
       <excludeFolder url="file://$MODULE_DIR$/src/c1_moreaggressive" />
       <excludeFolder url="file://$MODULE_DIR$/src/c2_squads" />
       <excludeFolder url="file://$MODULE_DIR$/src/c_merged" />
+      <excludeFolder url="file://$MODULE_DIR$/src/d_batterdensity" />
+      <excludeFolder url="file://$MODULE_DIR$/src/d_player" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
