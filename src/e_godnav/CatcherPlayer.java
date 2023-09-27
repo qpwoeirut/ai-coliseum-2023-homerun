@@ -38,6 +38,7 @@ public class CatcherPlayer extends BasePlayer {
                 uc.move(dir);
             }
 
+            comms.useRemainingBytecode();
             uc.yield();
         }
     }

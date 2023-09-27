@@ -65,6 +65,7 @@ public class PitcherPlayer extends BasePlayer {
                 }
             }
 
+            comms.useRemainingBytecode();
             uc.yield();
         }
     }

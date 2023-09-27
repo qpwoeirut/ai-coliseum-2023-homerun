@@ -41,6 +41,7 @@ public class BatterPlayer extends BasePlayer {
                     normalBehavior(enemies);
                 }
             }
+            comms.useRemainingBytecode();
             uc.yield();
         }
     }
@@ -135,9 +136,6 @@ public class BatterPlayer extends BasePlayer {
                     final Direction toMove = bg.move(patrolLoc);
                     if (uc.canMove(toMove)) {
                         uc.move(toMove);
-                    } else {
-                        uc.yield();
-                        //Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
                     }
                 }
             }

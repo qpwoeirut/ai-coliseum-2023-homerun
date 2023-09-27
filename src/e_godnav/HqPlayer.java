@@ -67,6 +67,8 @@ public class HqPlayer extends BasePlayer {
             } else {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
             }
+
+            comms.useRemainingBytecode();
             uc.yield();
         }
     }
