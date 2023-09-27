@@ -27,19 +27,13 @@ abstract public class BasePlayer {
         } else URGENCY_FACTOR = 1;
     }
 
-    protected void move(Location fin) {
-        uc.move(bg.move(fin));
-    }
-
-    protected Location [] senseAndReportBases ()
-    {
+    protected Location[] senseAndReportBases() {
         Location[] bases = uc.senseObjects(MapObject.BASE, VISION);
         comms.reportNewBases(bases);
         return bases;
     }
 
-    protected Location [] senseAndReportStadiums ()
-    {
+    protected Location[] senseAndReportStadiums() {
         Location[] stadiums = uc.senseObjects(MapObject.STADIUM, VISION);
         comms.reportNewStadiums(stadiums);
         return stadiums;
