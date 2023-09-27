@@ -124,43 +124,21 @@ public class Util {
         return loc.x * 10000 + loc.y;
     }
 
-    public static boolean batterMayInteract(UnitController uc, Location loc) {
+    public static boolean batterMayInteract(UnitController uc, Communications comms, Location loc) {
         Location cur = uc.getLocation();
         if (Util.chebyshevDistance(cur, loc) <= 1) return true;
         if (Util.chebyshevDistance(cur, loc) > 3) return false;
         Direction dir1 = cur.directionTo(loc).rotateLeft().rotateLeft();
-        MapObject obj1, obj2;
         for (int i = 5; i > 0; --i) {
             if (!uc.isOutOfMap(cur)) {
-                Location newCur = cur.add(dir1);
-                obj1 = uc.senseObjectAtLocation(newCur, true);
-                if (obj1 != MapObject.WATER && obj1 != MapObject.BALL) {
+                final Location newCur = cur.add(dir1);
+                if (comms.isPassable(newCur)) {
                     final Direction dir2 = loc.directionTo(cur);
-
-                    if (cur.distanceSquared(loc.add(dir2)) <= 20 && !uc.isOutOfMap(loc.add(dir2))) {
-                        obj2 = uc.senseObjectAtLocation(loc.add(dir2), true);
-                        if (obj2 != MapObject.WATER && obj2 != MapObject.BALL && Util.chebyshevDistance(newCur, loc.add(dir2)) <= 1) return true;
-                    }
-
-                    if (cur.distanceSquared(loc.add(dir2.rotateLeft())) <= 20 && !uc.isOutOfMap(loc.add(dir2.rotateLeft()))) {
-                        obj2 = uc.senseObjectAtLocation(loc.add(dir2.rotateLeft()), true);
-                        if (obj2 != MapObject.WATER && obj2 != MapObject.BALL && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft())) <= 1) return true;
-                    }
-
-                    if (cur.distanceSquared(loc.add(dir2.rotateRight())) <= 20 && !uc.isOutOfMap(loc.add(dir2.rotateRight()))) {
-                        obj2 = uc.senseObjectAtLocation(loc.add(dir2.rotateRight()), true);
-                        if (obj2 != MapObject.WATER && obj2 != MapObject.BALL && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight())) <= 1) return true;
-                    }
-
-                    if (cur.distanceSquared(loc.add(dir2.rotateLeft().rotateLeft())) <= 20 && !uc.isOutOfMap(loc.add(dir2.rotateLeft().rotateLeft()))) {
-                        obj2 = uc.senseObjectAtLocation(loc.add(dir2.rotateLeft().rotateLeft()), true);
-                        if (obj2 != MapObject.WATER && obj2 != MapObject.BALL && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft().rotateLeft())) <= 1) return true;
-                    }
-
-                    if (cur.distanceSquared(loc.add(dir2.rotateRight().rotateRight())) <= 20 && !uc.isOutOfMap(loc.add(dir2.rotateRight().rotateRight()))) {
-                        obj2 = uc.senseObjectAtLocation(loc.add(dir2.rotateRight().rotateRight()), true);
-                        if (obj2 != MapObject.WATER && obj2 != MapObject.BALL && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight().rotateRight())) <= 1) return true;
-                    }
+                    if (comms.isPassable(loc.add(dir2)) && Util.chebyshevDistance(newCur, loc.add(dir2)) <= 1) return true;
+                    if (comms.isPassable(loc.add(dir2.rotateLeft())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft())) <= 1) return true;
+                    if (comms.isPassable(loc.add(dir2.rotateRight())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight())) <= 1) return true;
+                    if (comms.isPassable(loc.add(dir2.rotateLeft().rotateLeft())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft().rotateLeft())) <= 1) return true;
+                    if (comms.isPassable(loc.add(dir2.rotateRight().rotateRight())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight().rotateRight())) <= 1) return true;
                 }
             }
             dir1 = dir1.rotateRight();

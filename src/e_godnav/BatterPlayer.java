@@ -49,7 +49,7 @@ public class BatterPlayer extends BasePlayer {
     void normalBehavior(UnitInfo[] enemies) {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        if (nearestEnemyBatter != null && Util.batterMayInteract(uc, nearestEnemyBatter.getLocation())) {
+        if (nearestEnemyBatter != null && Util.batterMayInteract(uc, comms, nearestEnemyBatter.getLocation())) {
 //            uc.println("enemy at " + nearestEnemyBatter.getLocation());
             // TODO: move batters in knight's move shapes. until then we should probably just run away
 //            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
@@ -80,7 +80,7 @@ public class BatterPlayer extends BasePlayer {
             }
         } else {
             final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-            if (nearestEnemy != null && Util.batterMayInteract(uc, nearestEnemy.getLocation())) {
+            if (nearestEnemy != null && Util.batterMayInteract(uc, comms, nearestEnemy.getLocation())) {
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();
