@@ -408,12 +408,24 @@ public class Communications {
         uc.write(QUEUE_OFFSET + queueEnd, (n * MAP_DIMENSION + internalLoc.x) * MAP_DIMENSION + internalLoc.y);
         uc.write(QUEUE_OFFSET + QUEUE_END, queueEnd + 1);
     }
+
+    /**
+     * Recommends a direction to move in, in order to reach a focal point close to a given location
+     * Best used when location given is a focal point
+     * Returns null if a recommendation can't be given (likely because the area hasn't been processed)
+     * Returns Direction.ZERO if already at the given location
+     * @param externalTargetLoc location to reach
+     * @return a recommended direction or null if no recommendation can be made
+     */
     public Direction directionViaFocalPoint(Location externalTargetLoc) {
         final Location curLoc = convertToInternalCoordinates(uc.getLocation());
         final int bestIdx = findBestDistanceMapIdx(curLoc, convertToInternalCoordinates(externalTargetLoc));
-        if (bestIdx == -1) return Direction.ZERO;
+        if (bestIdx == -1) return null;
 
         final int currentDist = readMapLocation(bestIdx, curLoc.x, curLoc.y);
+        if (currentDist == 0) return null;
+        if (currentDist == INITIAL_DISTANCE) return Direction.ZERO;
+
         if (uc.canMove(Direction.NORTHWEST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curLoc.x + Direction.NORTHWEST.dx, curLoc.y + Direction.NORTHWEST.dy)) return Direction.NORTHWEST;
         if (uc.canMove(Direction.NORTHEAST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curLoc.x + Direction.NORTHEAST.dx, curLoc.y + Direction.NORTHEAST.dy)) return Direction.NORTHEAST;
         if (uc.canMove(Direction.SOUTHWEST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curLoc.x + Direction.SOUTHWEST.dx, curLoc.y + Direction.SOUTHWEST.dy)) return Direction.SOUTHWEST;
