@@ -1,9 +1,6 @@
 package e_godnav.util;
 
-import aic2023.user.Location;
-import aic2023.user.UnitController;
-import aic2023.user.UnitInfo;
-import aic2023.user.UnitType;
+import aic2023.user.*;
 
 public class Communications {
     private final UnitController uc;
@@ -38,7 +35,11 @@ public class Communications {
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = 40;
 
-    private final int MAP_OFFSET = 100000;
+    private final int QUEUE_OFFSET = 100000;
+    private final int QUEUE_SIZE = 100000 - 2;
+    private final int QUEUE_START = 0;
+    private final int QUEUE_END = 1;
+    private final int MAP_OFFSET = 200000;
     private final int MAP_DIMENSION = 123;
     // assume our HQ is at (60, 60). This guess is off by at most 60 in either direction, se we need 120 to store the map
     private final int MAP_SIZE = 125 * 125;
@@ -46,6 +47,10 @@ public class Communications {
     // the first map holds which locations are passable (0 = impassable, 1 = passable)
     // all locations start off as impassable
     // the other maps hold distance to some origin
+    private final int DISTANCE_MAP_COUNT = MAP_SIZE - 1;
+
+    private final int DISTANCE_UNIT = 10000;
+    private final int DISTANCE_ROOT = 14142;
 
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
@@ -57,6 +62,7 @@ public class Communications {
         if (uc.getType() == UnitType.HQ) {
             uc.write(MAP_OFFSET + ORIGIN_X, uc.getLocation().x);
             uc.write(MAP_OFFSET + ORIGIN_Y, uc.getLocation().y);
+            createDistanceMapIfNotExists(uc.getLocation());
         }
     }
 
@@ -83,6 +89,8 @@ public class Communications {
                 uc.write(offset + OBJECT_SIZE * (n + m) + CLAIM_ID, NO_CLAIM);
                 uc.write(offset + OBJECT_SIZE * (n + m) + CLAIM_ROUND, NO_CLAIM);
                 ++m;
+
+                createDistanceMapIfNotExists(locs[locIdx]);
             }
         }
         uc.write(offset, n + m);
@@ -297,24 +305,120 @@ public class Communications {
 
     // ------------------------------------------ GLOBAL MAP ------------------------------------------
     // we report grass instead of water to ensure we don't run into issues where water suddenly appears and blocks off a computed path
+    // this way, we assume everything is blocked until we see otherwise
     public void reportNewGrass(Location[] grass) {
         for (int i = grass.length - 1; i >= 0; --i) {
             Location internalLoc = convertToInternalCoordinates(grass[i]);
             writeMapLocation(0, internalLoc.x, internalLoc.y, 1);
+            if (internalLoc.x % 10 == 0 && internalLoc.y % 10 == 0) {
+                createDistanceMapIfNotExists(grass[i]);
+            }
         }
     }
-
     public boolean isPassable(Location externalLoc) {
         final Location internalLoc = convertToInternalCoordinates(externalLoc);
         return readMapLocation(0, internalLoc.x, internalLoc.y) == 1;
     }
-    private Location convertToInternalCoordinates(Location original) {
-        return new Location(original.x - uc.read(MAP_OFFSET + ORIGIN_X) + 60, original.y - uc.read(MAP_OFFSET + ORIGIN_Y) + 60);
-    }
+
+    // for all maps, both global and distance
     private int readMapLocation(int mapIdx, int internalX, int internalY) {
         return uc.read(MAP_OFFSET + MAP_SIZE * mapIdx + MAP_DIMENSION * internalX + internalY);
     }
     private void writeMapLocation(int mapIdx, int internalX, int internalY, int value) {
         uc.write(MAP_OFFSET + MAP_SIZE * mapIdx + MAP_DIMENSION * internalX + internalY, value);
+    }
+
+    // ------------------------------------------ DISTANCE MAPS AND QUEUE ------------------------------------------
+
+    public Direction directionViaFocalPoint(Location externalTargetLoc) {
+        final Location internalCurrentLoc = convertToInternalCoordinates(uc.getLocation());
+        final Location internalTargetLoc = convertToInternalCoordinates(externalTargetLoc);
+        final int bestIdx = findBestDistanceMapIdx(internalCurrentLoc, internalTargetLoc);
+        if (bestIdx == -1) return Direction.ZERO;
+
+        final int currentDist = readMapLocation(bestIdx, internalCurrentLoc.x, internalCurrentLoc.y);
+        for (int i = 7; i >= 0; --i) {
+            if (uc.canMove(Direction.values()[i]) && currentDist - 1 == readMapLocation(bestIdx, internalCurrentLoc.x + Direction.values()[i].dx, internalCurrentLoc.y + Direction.values()[i].dy)) {
+                return Direction.values()[i];
+            }
+        }
+
+        return Direction.ZERO;
+    }
+    public Direction[] directionsFromFocalPoint(Location externalTargetLoc) {
+        Location curLoc = convertToInternalCoordinates(externalTargetLoc);
+        final int bestIdx = findBestDistanceMapIdx(convertToInternalCoordinates(uc.getLocation()), curLoc);
+        int dist = readMapLocation(bestIdx, curLoc.x, curLoc.y);
+        Direction[] directions = new Direction[dist];
+        for (--dist; dist >= 0; --dist) {
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.NORTH.dx, curLoc.y + Direction.NORTH.dy)) {
+                curLoc = curLoc.add(Direction.NORTH);
+                directions[dist] = Direction.SOUTH;
+                continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.NORTHEAST.dx, curLoc.y + Direction.NORTHEAST.dy)) {
+                curLoc = curLoc.add(Direction.NORTHEAST);
+                directions[dist] = Direction.SOUTHWEST;
+                continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.EAST.dx, curLoc.y + Direction.EAST.dy)) {
+                curLoc = curLoc.add(Direction.EAST);
+                directions[dist] = Direction.WEST; continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.SOUTHEAST.dx, curLoc.y + Direction.SOUTHEAST.dy)) {
+                curLoc = curLoc.add(Direction.SOUTHEAST);
+                directions[dist] = Direction.NORTHWEST; continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.SOUTH.dx, curLoc.y + Direction.SOUTH.dy)) {
+                curLoc = curLoc.add(Direction.SOUTH);
+                directions[dist] = Direction.NORTH; continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.SOUTHWEST.dx, curLoc.y + Direction.SOUTHWEST.dy)) {
+                curLoc = curLoc.add(Direction.SOUTHWEST);
+                directions[dist] = Direction.NORTHEAST; continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.WEST.dx, curLoc.y + Direction.WEST.dy)) {
+                curLoc = curLoc.add(Direction.WEST);
+                directions[dist] = Direction.EAST; continue;
+            }
+            if (dist == readMapLocation(bestIdx, curLoc.x + Direction.NORTHWEST.dx, curLoc.y + Direction.NORTHWEST.dy)) {
+                curLoc = curLoc.add(Direction.NORTHWEST);
+                directions[dist] = Direction.SOUTHEAST; continue;
+            }
+            return null;
+        }
+        return directions;
+    }
+
+    private int findBestDistanceMapIdx(Location internalCurrentLoc, Location internalTargetLoc) {
+        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        int bestIdx = -1;
+        int minDist = 1_000_000_000;
+        for (int i = n; i > 0; --i) {
+            final int computedDist = infIfZero(readMapLocation(i, internalCurrentLoc.x, internalCurrentLoc.y)) + infIfZero(readMapLocation(i, internalTargetLoc.x, internalTargetLoc.y));
+            if (minDist > computedDist) {
+                minDist = computedDist;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+    private void createDistanceMapIfNotExists(Location externalLoc) {
+        final Location internalLoc = convertToInternalCoordinates(externalLoc);
+        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        for (int i = n; i > 0; --i) {
+            if (uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_X) == internalLoc.x && uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_Y) == internalLoc.y) return;
+        }
+
+        uc.write(MAP_OFFSET + DISTANCE_MAP_COUNT, n + 1);
+        uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_X, internalLoc.x);
+        uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_Y, internalLoc.y);
+    }
+    private Location convertToInternalCoordinates(Location original) {
+        return new Location(original.x - uc.read(MAP_OFFSET + ORIGIN_X) + 60, original.y - uc.read(MAP_OFFSET + ORIGIN_Y) + 60);
+    }
+
+    private int infIfZero(int x) {
+        return x == 0 ? 1_000_000_000 : x;
     }
 }
