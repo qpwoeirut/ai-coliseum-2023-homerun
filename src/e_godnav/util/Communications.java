@@ -26,13 +26,13 @@ public class Communications {
     private final int STADIUM_OFFSET = MAX_OBJECT_COUNT * OBJECT_SIZE;
     private final int WATER_OFFSET = 2 * MAX_OBJECT_COUNT * OBJECT_SIZE;
 
-    private final int CHECK_IN_OFFSET = 100000;
+    private final int CHECK_IN_OFFSET = 50000;
     private final int BATTER_NUMBER = 0;
     private final int CATCHER_NUMBER = 1;
     private final int PITCHER_NUMBER = 2;
     private final int HQ_NUMBER = 3;
 
-    private final int ENEMY_SIGHTING_OFFSET = 200000;
+    private final int ENEMY_SIGHTING_OFFSET = 60000;
     private final int ENEMY_SIZE = 3;
     private final int ENEMY_X = 1;
     private final int ENEMY_Y = 2;
@@ -48,6 +48,7 @@ public class Communications {
         this.uc = uc;
     }
 
+    // ------------------------------------------ BASE AND STADIUM LOCATIONS ------------------------------------------
     public void reportNewBases(Location[] bases) {
         reportNewObjects(bases, BASE_OFFSET);
     }
@@ -93,6 +94,7 @@ public class Communications {
         uc.write(offset + OBJECT_SIZE * n + CLAIM_ROUND, NO_CLAIM);
     }
 
+    // ------------------------------------------ COUNTING UNITS ON OUR TEAM ------------------------------------------
     public void checkIn() {
         final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
         final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
@@ -125,6 +127,7 @@ public class Communications {
         return uc.read(lastIndex) + uc.read(currentIndex);
     }
 
+    // ------------------------------------------ BASE AND STADIUM CLAIMING ------------------------------------------
     /**
      * Lists all bases that have not yet been claimed.
      * @return int: the number of unclaimed bases
@@ -181,6 +184,7 @@ public class Communications {
         return uc.read(offset + OBJECT_SIZE * index + property);
     }
 
+    // ------------------------------------------ ENEMY SIGHTINGS ------------------------------------------
     /**
      * Records a list of enemy sightings. Will try to combine each of these sightings with an existing sighting, if a nearby one exists.
      * Prioritizing combining first will ensure that we don't end up with too many items in the array.
