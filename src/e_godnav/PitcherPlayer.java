@@ -33,7 +33,8 @@ public class PitcherPlayer extends BasePlayer {
                     comms.updateClaimOnStadium(claimedObjectId);
                 }
                 if (!claimedObjectLocation.isEqual(uc.getLocation())) {
-                    final Direction toMove = bg.move(claimedObjectLocation);
+                    Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation);
+                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
                     if (uc.canMove(toMove) && toMove != Direction.ZERO) {
                         uc.move(toMove);
                     }
