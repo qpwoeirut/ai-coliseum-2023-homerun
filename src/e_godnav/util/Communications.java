@@ -24,7 +24,6 @@ public class Communications {
     private final int MAX_OBJECT_COUNT = 4000; // > 60^2
     private final int BASE_OFFSET = 0;
     private final int STADIUM_OFFSET = MAX_OBJECT_COUNT * OBJECT_SIZE;
-    private final int WATER_OFFSET = 2 * MAX_OBJECT_COUNT * OBJECT_SIZE;
 
     private final int CHECK_IN_OFFSET = 50000;
     private final int BATTER_NUMBER = 0;
@@ -39,6 +38,15 @@ public class Communications {
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = 40;
 
+    private final int MAP_OFFSET = 100000;
+    private final int MAP_DIMENSION = 123;
+    // assume our HQ is at (60, 60). This guess is off by at most 60 in either direction, se we need 120 to store the map
+    private final int MAP_SIZE = 125 * 125;
+    private final int ORIGIN_X = MAP_SIZE - 3, ORIGIN_Y = MAP_SIZE - 2;  // take advantage of extra buffer space
+    // the first map holds which locations are passable (0 = impassable, 1 = passable)
+    // all locations start off as impassable
+    // the other maps hold distance to some origin
+
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
     public int[] returnedIds = new int[8];  // only used for map objects
@@ -46,6 +54,10 @@ public class Communications {
 
     public Communications(UnitController uc) {
         this.uc = uc;
+        if (uc.getType() == UnitType.HQ) {
+            uc.write(MAP_OFFSET + ORIGIN_X, uc.getLocation().x);
+            uc.write(MAP_OFFSET + ORIGIN_Y, uc.getLocation().y);
+        }
     }
 
     // ------------------------------------------ BASE AND STADIUM LOCATIONS ------------------------------------------
@@ -55,10 +67,6 @@ public class Communications {
 
     public void reportNewStadiums(Location[] stadiums) {
         reportNewObjects(stadiums, STADIUM_OFFSET);
-    }
-
-    public void reportNewWater(Location[] water) {
-        reportNewObjects(water, WATER_OFFSET);
     }
 
     private void reportNewObjects(Location[] locs, int offset) {
@@ -285,5 +293,28 @@ public class Communications {
     }
     private void writeSightingProperty(int index, int property, int value) {
         uc.write(ENEMY_SIGHTING_OFFSET + ENEMY_SIZE * index + property, value);
+    }
+
+    // ------------------------------------------ GLOBAL MAP ------------------------------------------
+    // we report grass instead of water to ensure we don't run into issues where water suddenly appears and blocks off a computed path
+    public void reportNewGrass(Location[] grass) {
+        for (int i = grass.length - 1; i >= 0; --i) {
+            Location internalLoc = convertToInternalCoordinates(grass[i]);
+            writeMapLocation(0, internalLoc.x, internalLoc.y, 1);
+        }
+    }
+
+    public boolean isPassable(Location externalLoc) {
+        final Location internalLoc = convertToInternalCoordinates(externalLoc);
+        return readMapLocation(0, internalLoc.x, internalLoc.y) == 1;
+    }
+    private Location convertToInternalCoordinates(Location original) {
+        return new Location(original.x - uc.read(MAP_OFFSET + ORIGIN_X) + 60, original.y - uc.read(MAP_OFFSET + ORIGIN_Y) + 60);
+    }
+    private int readMapLocation(int mapIdx, int internalX, int internalY) {
+        return uc.read(MAP_OFFSET + MAP_SIZE * mapIdx + MAP_DIMENSION * internalX + internalY);
+    }
+    private void writeMapLocation(int mapIdx, int internalX, int internalY, int value) {
+        uc.write(MAP_OFFSET + MAP_SIZE * mapIdx + MAP_DIMENSION * internalX + internalY, value);
     }
 }

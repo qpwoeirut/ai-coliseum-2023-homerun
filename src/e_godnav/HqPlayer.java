@@ -10,12 +10,9 @@ public class HqPlayer extends BasePlayer {
     }
 
     void run() {
-        final float SENSING_RADIUS = 64;
-
         senseAndReportBases();
         Location[] visibleStadiums = senseAndReportStadiums();
-        Location[] visibleWater = uc.senseObjects(MapObject.WATER, SENSING_RADIUS);
-        comms.reportNewWater(visibleWater);
+        comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
 
         // handle first turn separately, if we can see a stadium
         if (visibleStadiums.length >= 2) {
