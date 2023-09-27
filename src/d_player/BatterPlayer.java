@@ -256,7 +256,13 @@ public class BatterPlayer extends BasePlayer {
         return 0;
     }
 
+    Direction spreadOut(Location idealTarget) {
+        return spreadOut(idealTarget.x - uc.getLocation().x, idealTarget.y - uc.getLocation().y);
+    }
     Direction spreadOut() {
+        return spreadOut(0, 0);
+    }
+    Direction spreadOut(float weightX, float weightY) {
         final Location currentLocation = uc.getLocation();
         float x = currentLocation.x, y = currentLocation.y;
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
@@ -264,18 +270,20 @@ public class BatterPlayer extends BasePlayer {
         float allyWeightX = 0, allyWeightY = 0;
         Location loc;
         for (int i = allies.length; i --> 0;) {
-            loc = allies[i].getLocation();
-            // add one to avoid div by 0 when running out of bytecode
-            dist = currentLocation.distanceSquared(loc) + 1;
-            // subtract since we want to move away
-            allyWeightX -= (loc.x - x) / dist;
-            allyWeightY -= (loc.y - y) / dist;
+            if (allies[i].getType() == UnitType.BATTER || allies[i].getType() == UnitType.PITCHER) {
+                loc = allies[i].getLocation();
+                // add 0.01 to avoid div by 0 when running out of bytecode
+                dist = currentLocation.distanceSquared(loc) + 0.01f;
+                // subtract since we want to move away
+                allyWeightX -= (loc.x - x) / dist;
+                allyWeightY -= (loc.y - y) / dist;
+            }
         }
-        float weightX = allyWeightX * 10;
-        float weightY = allyWeightY * 10;
+        weightX += allyWeightX * 10;
+        weightY += allyWeightY * 10;
 
-        int finalDx = uc.getRandomDouble() * 10 > weightX + 5 ? -1 : 1;
-        int finalDy = uc.getRandomDouble() * 10 > weightY + 5 ? -1 : 1;
+        int finalDx = uc.getRandomDouble() * 40 > weightX + 20 ? -1 : 1;
+        int finalDy = uc.getRandomDouble() * 40 > weightY + 20 ? -1 : 1;
         return Direction.getDirection(finalDx, finalDy);
     }
 }
