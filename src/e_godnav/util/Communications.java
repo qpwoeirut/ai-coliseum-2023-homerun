@@ -45,16 +45,20 @@ public class Communications {
     private final int MAP_DIMENSION = 123;
     // assume our HQ is at (60, 60). This guess is off by at most 60 in either direction, se we need 120 to store the map
     private final int MAP_SIZE = 125 * 125;
-    private final int ORIGIN_X = MAP_SIZE - 3, ORIGIN_Y = MAP_SIZE - 2;  // take advantage of extra buffer space
+    private final int ORIGIN_X = MAP_SIZE - 4, ORIGIN_Y = MAP_SIZE - 3;  // take advantage of extra buffer space
     private final int PASSABLE = 1;
     // the first map holds which locations are passable (0 = impassable, 1 = passable)
     // all locations start off as impassable
     // the other maps hold distance to some origin
     private final int DISTANCE_MAP_COUNT = MAP_SIZE - 1;
+    // note that the 0th map is the passability map
+    // therefore distance maps are 1-indexed
 
     private final int DISTANCE_UNIT = 10000;
     private final int DISTANCE_ROOT = 14142;
+    private final int UNINITIALIZED = 0;
     private final int INITIAL_DISTANCE = 1;  // 0 represents INF, since array is 0-initialized
+    private final int INF = 1_000_000_000;
 
     // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
     public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
@@ -312,11 +316,57 @@ public class Communications {
     // we report grass instead of water to ensure we don't run into issues where water suddenly appears and blocks off a computed path
     // this way, we assume everything is blocked until we see otherwise
     public void reportNewGrass(Location[] grass) {
+        final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        int queueEnd = uc.read(QUEUE_OFFSET + QUEUE_END);
         for (int i = grass.length - 1; i >= 0; --i) {
-            Location internalLoc = convertToInternalCoordinates(grass[i]);
-            writeMapLocation(0, internalLoc.x, internalLoc.y, 1);
-            if (internalLoc.x % 10 == 0 && internalLoc.y % 10 == 0) {
+            final Location internalLoc = convertToInternalCoordinates(grass[i]);
+            final int x = internalLoc.x, y = internalLoc.y;
+            writeMapLocation(0, x, y, 1);
+            if (x % 10 == 0 && y % 10 == 0) {
                 createDistanceMapIfNotExists(grass[i]);
+            }
+
+            for (int m = mapCount; m > 0; --m) {
+                if (readMapLocation(m, x, y) == UNINITIALIZED) {
+                    int dist = INF;
+                    if (readMapLocation(m, x - 1, y - 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x - 1, y - 1) + DISTANCE_ROOT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x - 1, y + 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x - 1, y + 1) + DISTANCE_ROOT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x + 1, y - 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x + 1, y - 1) + DISTANCE_ROOT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x + 1, y + 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x + 1, y + 1) + DISTANCE_ROOT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x - 1, y) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x - 1, y) + DISTANCE_UNIT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x, y - 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x, y - 1) + DISTANCE_UNIT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x, y + 1) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x, y + 1) + DISTANCE_UNIT;
+                        if (dist > curDist) dist = curDist;
+                    }
+                    if (readMapLocation(m, x + 1, y) != UNINITIALIZED) {
+                        final int curDist = readMapLocation(m, x + 1, y) + DISTANCE_UNIT;
+                        if (dist > curDist) dist = curDist;
+                    }
+
+                    if (dist < INF) {
+                        uc.write(QUEUE_OFFSET + queueEnd, packMapAndIndex(m, x, y));
+                        queueEnd = (queueEnd + 1) % QUEUE_END;
+                    }
+                }
             }
         }
     }
@@ -370,10 +420,14 @@ public class Communications {
     private boolean checkLocation(int queueIdx, int mapIdx, int newX, int newY, int dist, int distChange) {
         if (readMapLocation(0, newX, newY) == PASSABLE && infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
             writeMapLocation(mapIdx, newX, newY, dist + distChange);
-            uc.write(QUEUE_OFFSET + queueIdx, (mapIdx * MAP_DIMENSION + newX) * MAP_DIMENSION + newY);
+            uc.write(QUEUE_OFFSET + queueIdx, packMapAndIndex(mapIdx, newX, newY));
             return true;
         }
         return false;
+    }
+
+    private int packMapAndIndex(int mapIdx, int x, int y) {
+        return (mapIdx * MAP_DIMENSION + x) * MAP_DIMENSION + y;
     }
 
     // ------------------------------------------ DISTANCE MAPS ------------------------------------------
@@ -381,7 +435,7 @@ public class Communications {
     private int findBestDistanceMapIdx(Location internalCurrentLoc, Location internalTargetLoc) {
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int bestIdx = -1;
-        int minDist = 1_000_000_000;
+        int minDist = INF;
         for (int i = n; i > 0; --i) {
             final int computedDist = infIfZero(readMapLocation(i, internalCurrentLoc.x, internalCurrentLoc.y)) + infIfZero(readMapLocation(i, internalTargetLoc.x, internalTargetLoc.y));
             if (minDist > computedDist) {
@@ -497,6 +551,6 @@ public class Communications {
     }
 
     private int infIfZero(int x) {
-        return x == 0 ? 1_000_000_000 : x;
+        return x == 0 ? INF : x;
     }
 }
