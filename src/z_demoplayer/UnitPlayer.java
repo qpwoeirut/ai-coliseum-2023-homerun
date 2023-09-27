@@ -1,4 +1,4 @@
-package demoplayer;
+package z_demoplayer;
 
 import aic2023.user.*;
 
