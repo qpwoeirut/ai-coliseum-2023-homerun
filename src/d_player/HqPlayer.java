@@ -29,10 +29,10 @@ public class HqPlayer extends BasePlayer {
             Direction dir = uc.getLocation().directionTo(visibleStadiums[0]);
 
             recruitUnitToward(UnitType.PITCHER, dir);
-            recruitUnitToward(UnitType.CATCHER, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+            recruitUnitToward(UnitType.CATCHER, Direction.values()[(int) (uc.getRandomDouble() * 8)]);
         } else {
-            recruitUnitToward(UnitType.CATCHER, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
-            recruitUnitToward(UnitType.PITCHER, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+            recruitUnitToward(UnitType.CATCHER, Direction.values()[(int) (uc.getRandomDouble() * 8)]);
+            recruitUnitToward(UnitType.PITCHER, Direction.values()[(int) (uc.getRandomDouble() * 8)]);
         }
 
         final int hqX = uc.getLocation().x;
@@ -43,7 +43,7 @@ public class HqPlayer extends BasePlayer {
             comms.decayEnemySightingUrgencies();
             UnitInfo[] enemies = senseAndReportEnemies();
 
-//            uc.println("bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
+            // uc.println("Round " + uc.getRound() + ". bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
             boolean enemyBattersNearby = false;
             boolean[][] hasEnemyBatter = new boolean[20][20];
@@ -54,7 +54,7 @@ public class HqPlayer extends BasePlayer {
                 }
             }
 
-            if (enemyBattersNearby) {
+            if (enemyBattersNearby || comms.countBatters() * comms.countBatters() * comms.countBatters() * 10 < uc.getRound()) {
                 while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitNextToEnemy(UnitType.BATTER, hasEnemyBatter)) {
                     // recruit batters to hit the nearby enemy batters
                 }
@@ -65,7 +65,7 @@ public class HqPlayer extends BasePlayer {
                 while (uc.getReputation() >= UnitType.PITCHER.getStat(UnitStat.REP_COST) && recruitUnitSafely(UnitType.PITCHER, hasEnemyBatter)) {
                     // recruitUnitSafely will spawn units until we can't anymore
                 }
-            } else if (comms.countBatters() <= comms.countCatchers() * 4) {
+            } else if (comms.countBatters() <= comms.countCatchers() * 4 || comms.countCatchers() >= 10) {
                 recruitUnitSafely(UnitType.BATTER, hasEnemyBatter);
             } else {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
