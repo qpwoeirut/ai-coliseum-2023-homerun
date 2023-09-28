@@ -12,7 +12,7 @@ public class HqPlayer extends BasePlayer {
     void run() {
         senseAndReportBases();
         Location[] visibleStadiums = senseAndReportStadiums();
-        comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
+        comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 48));  // outer grass will be reported on rounds 2 and 3
 
         // handle first turn separately, if we can see a stadium
         if (visibleStadiums.length >= 2) {
@@ -36,6 +36,11 @@ public class HqPlayer extends BasePlayer {
         final int hqY = uc.getLocation().y;
         // handle other turns
         while (true) {
+            // first round is round 0
+            if (uc.getRound() == 1) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 16));
+            if (uc.getRound() == 2) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 6));
+            if (uc.getRound() == 3) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
+
             comms.checkIn();
             comms.decayEnemySightingUrgencies();
             UnitInfo[] enemies = senseAndReportEnemies();
