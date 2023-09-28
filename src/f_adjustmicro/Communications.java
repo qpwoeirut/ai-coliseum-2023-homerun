@@ -39,7 +39,7 @@ public class Communications {
     private final int QUEUE_SIZE = 100000 - 3;
     private final int QUEUE_START = QUEUE_SIZE;
     private final int QUEUE_END = QUEUE_SIZE + 1;
-    private final int QUEUE_ITERATION_BYTECODE = 800;
+    private final int QUEUE_ITERATION_BYTECODE = 850;
 
     private final int MAP_OFFSET = 200000;
     private final int MAP_DIMENSION = 123;
