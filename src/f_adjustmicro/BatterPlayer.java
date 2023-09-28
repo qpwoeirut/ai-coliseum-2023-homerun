@@ -358,8 +358,4 @@ public class BatterPlayer extends BasePlayer {
         int chosenIndex = topIndices[(int) (uc.getRandomDouble() * 3)];
         return Direction.values()[chosenIndex];
     }
-
-
-
-
 }
