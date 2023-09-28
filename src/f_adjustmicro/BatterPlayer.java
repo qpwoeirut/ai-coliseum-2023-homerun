@@ -68,7 +68,7 @@ public class BatterPlayer extends BasePlayer {
             for (int i = 7; i >= 0; --i) {
                 if (uc.canMove(Direction.values()[i])) {
                     final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
-                    if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance >= 2) {
+                    if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance > 2) {
                         bestChebyshevDist = nearestChebyshevDistance;
                         bestDir = i;
                     }
