@@ -433,7 +433,8 @@ public class Communications {
         int bestIdx = -1;
         int minDist = INF;
         for (int i = n; i > 0; --i) {
-            final int computedDist = infIfZero(readMapLocation(i, internalCurrentLoc.x, internalCurrentLoc.y)) + infIfZero(readMapLocation(i, internalTargetLoc.x, internalTargetLoc.y));
+            final int computedDist = infIfZero(readMapLocation(i, internalCurrentLoc.x, internalCurrentLoc.y)) / 2 + infIfZero(readMapLocation(i, internalTargetLoc.x, internalTargetLoc.y));
+            // prioritize going to focal point. divide to avoid overflow
             if (minDist > computedDist) {
                 minDist = computedDist;
                 bestIdx = i;
