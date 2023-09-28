@@ -267,6 +267,7 @@ public class BatterPlayer extends BasePlayer {
     Direction spreadOut() {
         return spreadOut(0, 0);
     }
+
     Direction spreadOut(float weightX, float weightY) {
         final Location currentLocation = uc.getLocation();
         float x = currentLocation.x, y = currentLocation.y;
@@ -277,18 +278,17 @@ public class BatterPlayer extends BasePlayer {
         for (int i = allies.length; i --> 0;) {
             if (allies[i].getType() == UnitType.BATTER || allies[i].getType() == UnitType.PITCHER) {
                 loc = allies[i].getLocation();
-                // add 0.01 to avoid div by 0 when running out of bytecode
-                dist = currentLocation.distanceSquared(loc) + 0.01f;
-                // subtract since we want to move away
+                dist = currentLocation.distanceSquared(loc) + 0.01f; // Avoid div by 0
                 allyWeightX -= (loc.x - x) / dist;
                 allyWeightY -= (loc.y - y) / dist;
             }
         }
-        weightX += allyWeightX * 10;
-        weightY += allyWeightY * 10;
+        weightX += allyWeightX * 30;
+        weightY += allyWeightY * 30;
 
         int finalDx = uc.getRandomDouble() * 40 > weightX + 20 ? -1 : 1;
         int finalDy = uc.getRandomDouble() * 40 > weightY + 20 ? -1 : 1;
         return Direction.getDirection(finalDx, finalDy);
     }
+
 }
