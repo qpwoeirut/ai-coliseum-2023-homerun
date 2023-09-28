@@ -321,50 +321,42 @@ public class Communications {
         for (int i = grass.length - 1; i >= 0; --i) {
             final Location internalLoc = convertToInternalCoordinates(grass[i]);
             final int x = internalLoc.x, y = internalLoc.y;
-            writeMapLocation(0, x, y, 1);
-            if (x % 10 == 0 && y % 10 == 0) {
-                createDistanceMapIfNotExists(grass[i]);
-            }
+            if (readMapLocation(0, x, y) == UNINITIALIZED) {
+                writeMapLocation(0, x, y, PASSABLE);
+                if (x % 10 == 0 && y % 10 == 0) {
+                    createDistanceMapIfNotExists(grass[i]);
+                }
 
-            for (int m = mapCount; m > 0; --m) {
-                if (readMapLocation(m, x, y) == UNINITIALIZED) {
-                    int dist = INF;
-                    if (readMapLocation(m, x - 1, y - 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x - 1, y - 1) + DISTANCE_ROOT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x - 1, y + 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x - 1, y + 1) + DISTANCE_ROOT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x + 1, y - 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x + 1, y - 1) + DISTANCE_ROOT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x + 1, y + 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x + 1, y + 1) + DISTANCE_ROOT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x - 1, y) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x - 1, y) + DISTANCE_UNIT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x, y - 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x, y - 1) + DISTANCE_UNIT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x, y + 1) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x, y + 1) + DISTANCE_UNIT;
-                        if (dist > curDist) dist = curDist;
-                    }
-                    if (readMapLocation(m, x + 1, y) != UNINITIALIZED) {
-                        final int curDist = readMapLocation(m, x + 1, y) + DISTANCE_UNIT;
-                        if (dist > curDist) dist = curDist;
-                    }
-
-                    if (dist < INF) {
-                        uc.write(QUEUE_OFFSET + queueEnd, packMapAndIndex(m, x, y));
-                        queueEnd = (queueEnd + 1) % QUEUE_END;
+                for (int m = mapCount; m > 0; --m) {
+                    if (readMapLocation(m, x, y) == INF) {
+                        // INF signifies that location was previously processed back when we thought it wasn't passable
+                        final int dist = Math.min(
+                                Math.min(
+                                        Math.min(
+                                                infIfZero(readMapLocation(m, x - 1, y - 1)),
+                                                infIfZero(readMapLocation(m, x - 1, y + 1))
+                                        ),
+                                        Math.min(
+                                                infIfZero(readMapLocation(m, x + 1, y - 1)),
+                                                infIfZero(readMapLocation(m, x + 1, y + 1))
+                                        )
+                                ) + DISTANCE_ROOT,
+                                Math.min(
+                                        Math.min(
+                                                infIfZero(readMapLocation(m, x - 1, y)),
+                                                infIfZero(readMapLocation(m, x, y - 1))
+                                        ),
+                                        Math.min(
+                                                infIfZero(readMapLocation(m, x, y + 1)),
+                                                infIfZero(readMapLocation(m, x + 1, y))
+                                        )
+                                ) + DISTANCE_UNIT
+                        );
+                        if (dist < INF) {
+                            writeMapLocation(m, x, y, dist);
+                            uc.write(QUEUE_OFFSET + queueEnd, packMapAndIndex(m, x, y));
+                            queueEnd = (queueEnd + 1) % QUEUE_END;
+                        }
                     }
                 }
             }
@@ -418,10 +410,14 @@ public class Communications {
     }
 
     private boolean checkLocation(int queueIdx, int mapIdx, int newX, int newY, int dist, int distChange) {
-        if (readMapLocation(0, newX, newY) == PASSABLE && infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
-            writeMapLocation(mapIdx, newX, newY, dist + distChange);
-            uc.write(QUEUE_OFFSET + queueIdx, packMapAndIndex(mapIdx, newX, newY));
-            return true;
+        if (readMapLocation(0, newX, newY) == PASSABLE) {
+            if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
+                writeMapLocation(mapIdx, newX, newY, dist + distChange);
+                uc.write(QUEUE_OFFSET + queueIdx, packMapAndIndex(mapIdx, newX, newY));
+                return true;
+            }
+        } else {
+            writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
         }
         return false;
     }
