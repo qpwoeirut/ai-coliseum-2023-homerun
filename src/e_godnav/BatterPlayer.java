@@ -88,8 +88,13 @@ public class BatterPlayer extends BasePlayer {
                 if (targetEnemySightingIndex == -1) {
                     Util.tryMoveInDirection(uc, spreadOut());
                 } else {
-                    Direction toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex]);
-                    if (toMove == null) toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                    Direction toMove = null;
+                    if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) > 500) {
+                        toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex]);
+                    }
+                    if (toMove == null) {
+                        toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                    }
                     if (uc.canMove(toMove)) {
                         uc.move(toMove);
                     } else {
