@@ -3,6 +3,8 @@ package f_adjustmicro;
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
+import f_adjustmicro.util.IntHashMap;
+import f_adjustmicro.util.Util;
 
 public class BugMover {
 
