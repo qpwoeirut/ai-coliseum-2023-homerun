@@ -2,7 +2,7 @@ package f_adjustmicro;
 
 import aic2023.user.*;
 import f_adjustmicro.util.Util;
-
+import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {
     // Add functionality to claim a function
     private Location patrolLoc = null;  // location the batter should hover around
@@ -291,36 +291,45 @@ public class BatterPlayer extends BasePlayer {
         return Direction.getDirection(finalDx, finalDy);
     }
     Direction calculateMovementDirection() {
-        //hold the scores of all 9 possible movements (8 directions + stay in place)
         int[] scores = new int[9];
-
-        // Reference to the unit's current location
         Location currentLocation = uc.getLocation();
-
-        // sensing the friendly units and HQ around the batter
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
-        Location hqLocation = null;  // how to get HQ location?
+        Location hqLocation = null;
+        UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
 
         for(Direction dir : Direction.values()) {
             int index = dir.ordinal();
             Location newLocation = currentLocation.add(dir);
 
-            // calculate scores based on distance to friendly batters and HQ
+            // batter micro to make sure you aren't being hit into water
+            for(UnitInfo enemy : enemies) {
+                if(enemy.getType() == UnitType.BATTER) {
+                    int distanceToEnemy = newLocation.distanceSquared(enemy.getLocation());
+                    if(distanceToEnemy <= 2) {
+                        Location potentialWaterLocation = newLocation.add(newLocation.directionTo(enemy.getLocation()));
+                        if(uc.senseObjectAtLocation(potentialWaterLocation, true) == MapObject.WATER
+                                && uc.getLocation().distanceSquared(potentialWaterLocation) <= 3) {
+                            // Assign a very low score if this condition is met.
+                            scores[index] = Integer.MIN_VALUE;
+                            continue;
+                        }
+                    }
+                }
+            }
+
             for(UnitInfo ally : allies) {
                 if(ally.getType() == UnitType.HQ) {
-                    // want to go further from nearby batters
                     scores[index] += newLocation.distanceSquared(ally.getLocation());
                     hqLocation = ally.getLocation();
                 } else if(ally.getType() == UnitType.BATTER) {
                     scores[index] += newLocation.distanceSquared(ally.getLocation());
                 }
             }
-
-            // more weight to HQ distance
+            //how to get hq location?
             if(hqLocation != null) scores[index] += 2 * newLocation.distanceSquared(hqLocation);
         }
 
-        // choose top 3 scores and randomly choose among them
+        // take the top 3 scores and randomly choose among them
         int[] topIndices = new int[] {-1, -1, -1};
         for(int i = 0; i < 9; i++) {
             if(topIndices[0] == -1 || scores[i] > scores[topIndices[0]]) {
@@ -335,10 +344,16 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-        // choose randomly among the top 3 directions
-        int chosenIndex = topIndices[(int)uc.getRandomDouble()*3];
+        // if all values are the same, then choose a random valid direction
+        if(Arrays.stream(topIndices).allMatch(i -> scores[i] == Integer.MIN_VALUE)) {
+            return Direction.values()[(int) uc.getRandomDouble()*3];
+        }
+
+        // Choose randomly among the top 3 directions
+        int chosenIndex = topIndices[(int) (uc.getRandomDouble() * 3)];
         return Direction.values()[chosenIndex];
     }
+
 
 
 }
