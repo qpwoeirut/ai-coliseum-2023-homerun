@@ -273,7 +273,7 @@ public class BatterPlayer extends BasePlayer {
         float x = currentLocation.x, y = currentLocation.y;
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
         float dist;
-        float allyWeightX = 0, allyWeightY = 0;
+        float allyWeightX = 1, allyWeightY = 1;
         Location loc;
         for (int i = allies.length; i --> 0;) {
             if (allies[i].getType() == UnitType.BATTER || allies[i].getType() == UnitType.PITCHER) {
@@ -290,5 +290,55 @@ public class BatterPlayer extends BasePlayer {
         int finalDy = uc.getRandomDouble() * 40 > weightY + 20 ? -1 : 1;
         return Direction.getDirection(finalDx, finalDy);
     }
+    Direction calculateMovementDirection() {
+        //hold the scores of all 9 possible movements (8 directions + stay in place)
+        int[] scores = new int[9];
+
+        // Reference to the unit's current location
+        Location currentLocation = uc.getLocation();
+
+        // sensing the friendly units and HQ around the batter
+        UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
+        Location hqLocation = null;  // how to get HQ location?
+
+        for(Direction dir : Direction.values()) {
+            int index = dir.ordinal();
+            Location newLocation = currentLocation.add(dir);
+
+            // calculate scores based on distance to friendly batters and HQ
+            for(UnitInfo ally : allies) {
+                if(ally.getType() == UnitType.HQ) {
+                    // want to go further from nearby batters
+                    scores[index] += newLocation.distanceSquared(ally.getLocation());
+                    hqLocation = ally.getLocation();
+                } else if(ally.getType() == UnitType.BATTER) {
+                    scores[index] += newLocation.distanceSquared(ally.getLocation());
+                }
+            }
+
+            // more weight to HQ distance
+            if(hqLocation != null) scores[index] += 2 * newLocation.distanceSquared(hqLocation);
+        }
+
+        // choose top 3 scores and randomly choose among them
+        int[] topIndices = new int[] {-1, -1, -1};
+        for(int i = 0; i < 9; i++) {
+            if(topIndices[0] == -1 || scores[i] > scores[topIndices[0]]) {
+                topIndices[2] = topIndices[1];
+                topIndices[1] = topIndices[0];
+                topIndices[0] = i;
+            } else if(topIndices[1] == -1 || scores[i] > scores[topIndices[1]]) {
+                topIndices[2] = topIndices[1];
+                topIndices[1] = i;
+            } else if(topIndices[2] == -1 || scores[i] > scores[topIndices[2]]) {
+                topIndices[2] = i;
+            }
+        }
+
+        // choose randomly among the top 3 directions
+        int chosenIndex = topIndices[(int)uc.getRandomDouble()*3];
+        return Direction.values()[chosenIndex];
+    }
+
 
 }
