@@ -367,7 +367,7 @@ public class Communications {
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
                             uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapAndIndex(m, x, y));
-                            queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_END;
+                            queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
                         }
                     }
                 }
