@@ -28,7 +28,7 @@ public class BatterPlayer extends BasePlayer {
                 final UnitInfo toAttack = pickTargetToAttack(enemies);
 //                debugBytecode("after pickTarget");
                 if (toAttack != null) {
-//                uc.println(toAttack.getLocation().x + " " + toAttack.getLocation().y);
+//                    uc.println("toAttack " + toAttack.getLocation().x + " " + toAttack.getLocation().y);
                     attack(toAttack);
                     enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
                 } else {
@@ -52,8 +52,8 @@ public class BatterPlayer extends BasePlayer {
     void normalBehavior(UnitInfo[] enemies) {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-//            uc.println("enemy at " + nearestEnemyBatter.getLocation());
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
+//            uc.println("enemy batter at " + nearestEnemyBatter.getLocation());
             // TODO: move batters in knight's move shapes. until then we should probably just run away
 //            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
 //            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
@@ -85,6 +85,7 @@ public class BatterPlayer extends BasePlayer {
         } else {
             final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
             if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
+//                uc.println("enemy at " + nearestEnemy.getLocation());
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();
@@ -92,6 +93,7 @@ public class BatterPlayer extends BasePlayer {
                 if (targetEnemySightingIndex == -1) {
                     Util.tryMoveInDirection(uc, spreadOut());
                 } else {
+//                    uc.println("sighting at " + comms.returnedLocations[targetEnemySightingIndex]);
                     Direction toMove = null;
                     final int distance = uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]);
                     if (distance > 500) {
