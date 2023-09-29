@@ -123,26 +123,4 @@ public class Util {
     public static int packLoc(Location loc) {
         return loc.x * 10000 + loc.y;
     }
-
-    public static boolean batterMayInteract(UnitController uc, Communications comms, Location loc) {
-        Location cur = uc.getLocation();
-        if (Util.chebyshevDistance(cur, loc) <= 1) return true;
-        if (Util.chebyshevDistance(cur, loc) > 3) return false;
-        Direction dir1 = cur.directionTo(loc).rotateLeft().rotateLeft();
-        for (int i = 5; i > 0; --i) {
-            if (!uc.isOutOfMap(cur)) {
-                final Location newCur = cur.add(dir1);
-                if (comms.isPassable(newCur)) {
-                    final Direction dir2 = loc.directionTo(cur);
-                    if (comms.isPassable(loc.add(dir2)) && Util.chebyshevDistance(newCur, loc.add(dir2)) <= 1) return true;
-                    if (comms.isPassable(loc.add(dir2.rotateLeft())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft())) <= 1) return true;
-                    if (comms.isPassable(loc.add(dir2.rotateRight())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight())) <= 1) return true;
-                    if (comms.isPassable(loc.add(dir2.rotateLeft().rotateLeft())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateLeft().rotateLeft())) <= 1) return true;
-                    if (comms.isPassable(loc.add(dir2.rotateRight().rotateRight())) && Util.chebyshevDistance(newCur, loc.add(dir2.rotateRight().rotateRight())) <= 1) return true;
-                }
-            }
-            dir1 = dir1.rotateRight();
-        }
-        return false;
-    }
 }

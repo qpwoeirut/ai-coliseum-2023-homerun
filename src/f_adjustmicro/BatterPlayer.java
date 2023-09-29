@@ -7,6 +7,7 @@ public class BatterPlayer extends BasePlayer {
     // Add functionality to claim a function
     private Location patrolLoc = null;  // location the batter should hover around
     private Location hqLoc;
+    private final int BATTER_REACHABLE_DISTANCE = 8;
 
     BatterPlayer(UnitController uc) {
         super(uc);
@@ -51,8 +52,8 @@ public class BatterPlayer extends BasePlayer {
     void normalBehavior(UnitInfo[] enemies) {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        if (nearestEnemyBatter != null && Util.batterMayInteract(uc, comms, nearestEnemyBatter.getLocation())) {
 //            uc.println("enemy at " + nearestEnemyBatter.getLocation());
+        if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
             // TODO: move batters in knight's move shapes. until then we should probably just run away
 //            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
 //            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
@@ -68,6 +69,7 @@ public class BatterPlayer extends BasePlayer {
 
             int bestDir = Direction.ZERO.ordinal();
             int bestChebyshevDist = Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation());
+            bestChebyshevDist = bestChebyshevDist <= 2 ? 100 : bestChebyshevDist;
             for (int i = 7; i >= 0; --i) {
                 if (uc.canMove(Direction.values()[i])) {
                     final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
@@ -82,7 +84,7 @@ public class BatterPlayer extends BasePlayer {
             }
         } else {
             final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-            if (nearestEnemy != null && Util.batterMayInteract(uc, comms, nearestEnemy.getLocation())) {
+            if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();

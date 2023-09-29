@@ -20,7 +20,7 @@ public class PitcherPlayer extends BasePlayer {
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 4) {
+            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 4 && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * 5) {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
 
@@ -32,7 +32,7 @@ public class PitcherPlayer extends BasePlayer {
                 } else {
                     comms.updateClaimOnStadium(claimedObjectId);
                 }
-                if (!claimedObjectLocation.isEqual(uc.getLocation())) {
+                if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
                     Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation);
                     if (toMove == null) toMove = bg.move(claimedObjectLocation);
                     if (uc.canMove(toMove) && toMove != Direction.ZERO) {

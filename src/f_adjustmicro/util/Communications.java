@@ -56,7 +56,7 @@ public class Communications {
     // note that the 0th map is the passability map
     // therefore distance maps are 1-indexed
 
-    private final int DISTANCE_UNIT = 10000;
+    public final int DISTANCE_UNIT = 10000;  // make this public for easier comparison
     private final int DISTANCE_ROOT = 14142;
     private final int INITIAL_DISTANCE = 1;  // 0 represents INF, since array is 0-initialized
     private final int INF = 1_000_000_000;
@@ -561,6 +561,17 @@ public class Communications {
             return -1;
         }
         return n;
+    }
+
+    public int lowerBoundDistance(Location externalLoc) {
+        final int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
+        final int internalX = convertToInternalX(externalLoc.x), internalY = convertToInternalY(externalLoc.y);
+        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        int ubDist = 0;
+        for (int i = n; i > 0; --i) {
+            ubDist = Math.max(ubDist, Math.abs(readMapLocation(n, curX, curY) - readMapLocation(n, internalX, internalY)));
+        }
+        return ubDist;
     }
 
     private int infIfZero(int x) {
