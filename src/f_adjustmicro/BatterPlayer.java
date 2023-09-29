@@ -20,7 +20,6 @@ public class BatterPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            senseAndReportGrassIfNecessary();
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
@@ -45,8 +44,8 @@ public class BatterPlayer extends BasePlayer {
                     normalBehavior(enemies);
                 }
             }
-            comms.useRemainingBytecode();
-            uc.yield();
+
+            endTurn();
         }
     }
 

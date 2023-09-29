@@ -4,6 +4,7 @@ import aic2023.user.*;
 
 public class HqPlayer extends BasePlayer {
     private final int OFFSET = 10;  // vision radius is 8
+    private int grassSensingIncrement, currentGrassVision;
 
     HqPlayer(UnitController uc) {
         super(uc);
@@ -12,8 +13,8 @@ public class HqPlayer extends BasePlayer {
     void run() {
         Location[] visibleBases = senseAndReportBases();
         Location[] visibleStadiums = senseAndReportStadiums();
-        final int grassSensingIncrement = Math.max(2, 20 / (visibleBases.length + visibleStadiums.length + 1));
-        int currentGrassVision = grassSensingIncrement;
+        grassSensingIncrement = Math.max(2, 20 / (visibleBases.length + visibleStadiums.length + 1));
+        currentGrassVision = grassSensingIncrement;
 
         // handle first turn separately, if we can see a stadium
         if (visibleStadiums.length >= 2) {
@@ -52,7 +53,7 @@ public class HqPlayer extends BasePlayer {
                 }
             }
 
-            if (enemyBattersNearby || comms.countBatters() * comms.countBatters() * comms.countBatters() * 10 < uc.getRound()) {
+            if (enemyBattersNearby || comms.countBatters() * 10 < comms.listEnemySightings()) {
                 while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitNextToEnemy(UnitType.BATTER, hasEnemyBatter)) {
                     // recruit batters to hit the nearby enemy batters
                 }
@@ -69,16 +70,19 @@ public class HqPlayer extends BasePlayer {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
             }
 
-            // first round is round 0
-            if (currentGrassVision < VISION) {
-                comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, currentGrassVision));
-                currentGrassVision = Math.min(currentGrassVision + grassSensingIncrement, (int)VISION);
-            } else if (currentGrassVision == VISION) {
-                comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, currentGrassVision));
-                ++currentGrassVision;
-            }
-            comms.useRemainingBytecode();
-            uc.yield();
+            endTurn();
+        }
+    }
+
+    @Override
+    protected void senseAndReportGrassIfNecessary() {
+        // first round is round 0
+        if (currentGrassVision < VISION) {
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+            currentGrassVision = Math.min(currentGrassVision + grassSensingIncrement, (int)VISION);
+        } else if (currentGrassVision == VISION) {
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+            ++currentGrassVision;
         }
     }
 

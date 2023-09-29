@@ -46,13 +46,20 @@ abstract public class BasePlayer {
     }
 
     protected void senseAndReportGrassIfNecessary() {
-        if (uc.getEnergyLeft() >= 1000 && !comms.grassAlreadySensedAtLocation()) {
-            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
+        if (uc.getEnergyLeft() >= 1500 && !comms.grassAlreadySensedAtLocation()) {
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, VISION));
         }
     }
 
+    protected void endTurn() {
+        final int currentRound = uc.getRound();
+        senseAndReportGrassIfNecessary();
+        if (uc.getRound() == currentRound) comms.useRemainingBytecode();
+        if (uc.getRound() == currentRound) uc.yield();
+    }
+
     protected void debug(String message) {
-        if (uc.getRound() >= 1450) uc.println(message);
+        if (uc.getRound() <= 200) uc.println(message);
     }
 
     protected void debugBytecode(String message) {

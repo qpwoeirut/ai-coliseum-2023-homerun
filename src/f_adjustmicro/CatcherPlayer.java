@@ -19,7 +19,6 @@ public class CatcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            senseAndReportGrassIfNecessary();
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
@@ -38,8 +37,7 @@ public class CatcherPlayer extends BasePlayer {
                 uc.move(dir);
             }
 
-            comms.useRemainingBytecode();
-            uc.yield();
+            endTurn();
         }
     }
 }
