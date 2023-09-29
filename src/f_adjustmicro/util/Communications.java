@@ -569,7 +569,7 @@ public class Communications {
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int ubDist = 0;
         for (int i = n; i > 0; --i) {
-            ubDist = Math.max(ubDist, Math.abs(readMapLocation(n, curX, curY) - readMapLocation(n, internalX, internalY)));
+            ubDist = Math.max(ubDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
         }
         return ubDist;
     }
