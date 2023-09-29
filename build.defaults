@@ -1,4 +1,4 @@
-package1=e_godnav
-package2=f_adjustmicro
+package1=g_fixgodnavlinebug
+package2=f_adjustmicrofixgodnav
 map=SandsOfTime
 seed=134
