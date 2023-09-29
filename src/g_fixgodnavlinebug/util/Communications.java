@@ -419,7 +419,6 @@ public class Communications {
      * Runs a distributed BFS, with one queue representing all the distance map queues
      * This BFS is rather inefficient because there are two different edge weights
      * This should be the last method called before yielding
-     * TODO: consider just running over the bytecode limit and then don't yield
      */
     public void useRemainingBytecode() {
         if (uc.getEnergyLeft() < DISTANCE_QUEUE_ITERATION_BYTECODE) return;
