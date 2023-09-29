@@ -284,7 +284,7 @@ public class BatterPlayer extends BasePlayer {
         float x = currentLocation.x, y = currentLocation.y;
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
         float dist;
-        float allyWeightX = 1, allyWeightY = 1;
+        float allyWeightX = 0, allyWeightY = 0;
         Location loc;
         for (int i = allies.length; i --> 0;) {
             if (allies[i].getType() == UnitType.BATTER || allies[i].getType() == UnitType.PITCHER) {
