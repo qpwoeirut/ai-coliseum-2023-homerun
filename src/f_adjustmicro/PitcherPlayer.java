@@ -16,7 +16,7 @@ public class PitcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
+            senseAndReportGrassIfNecessary();
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);

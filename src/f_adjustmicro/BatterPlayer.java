@@ -19,7 +19,7 @@ public class BatterPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
+            senseAndReportGrassIfNecessary();
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());

@@ -46,12 +46,13 @@ public class Communications {
     // assume our HQ is at (60, 60). This guess is off by at most 60 in either direction, se we need 120 to store the map
     private final int MAP_SIZE = 125 * 125;
     private final int ORIGIN_X = MAP_SIZE - 4, ORIGIN_Y = MAP_SIZE - 3;  // take advantage of extra buffer space
-    private final int UNINITIALIZED = 0;
-    private final int PASSABLE = 1;
-    private final int UNPROCESSED = -1;  // intermediate state where reportNewObjects has processed but reportNewGrass hasn't
-    // the first map holds which locations are passable (0 = impassable, 1 = passable)
+
+    // passability map states. states can only increase
     // all locations start off as impassable
-    // the other maps hold distance to some origin
+    private final int UNINITIALIZED = 0;
+    private final int UNPROCESSED = 1;  // intermediate state where reportNewObjects has processed but reportNewGrass hasn't
+    private final int PASSABLE = 2;
+    private final int SENSED = 3;  // implies passable
     private final int DISTANCE_MAP_COUNT = MAP_SIZE - 1;
     // note that the 0th map is the passability map
     // therefore distance maps are 1-indexed
@@ -328,11 +329,12 @@ public class Communications {
     // this must be called AFTER reportNewBases/Stadiums
     // ideally call this at the end of the turn
     public void reportNewGrassAfterObjects(Location[] grass) {
+//        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         for (int i = grass.length - 1; i >= 0; --i) {
             final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
-            if (readMapLocation(0, x, y) != PASSABLE) {
+            if (readMapLocation(0, x, y) < PASSABLE) {
                 writeMapLocation(0, x, y, PASSABLE);
                 if (x % 10 == 0 && y % 10 == 0) {
                     // don't need to update mapCount for the new maps since they haven't started processing yet
@@ -374,6 +376,27 @@ public class Communications {
             }
         }
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd);
+
+        final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
+        writeMapLocation(0, x, y, SENSED);
+        if (uc.getType() == UnitType.CATCHER) {
+            if (readMapLocation(0, x - 1, y) == PASSABLE) writeMapLocation(0, x - 1, y, SENSED);
+            if (readMapLocation(0, x, y - 1) == PASSABLE) writeMapLocation(0, x, y - 1, SENSED);
+            if (readMapLocation(0, x, y + 1) == PASSABLE) writeMapLocation(0, x, y + 1, SENSED);
+            if (readMapLocation(0, x + 1, y) == PASSABLE) writeMapLocation(0, x + 1, y, SENSED);
+        }
+//        uc.println("end grass " + uc.getEnergyUsed());
+    }
+    public boolean grassAlreadySensedAtLocation() {
+        if (uc.getType() == UnitType.CATCHER) {
+            final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
+            return (readMapLocation(0, x - 1, y) == UNINITIALIZED || readMapLocation(0, x - 1, y) == SENSED) &&
+                   (readMapLocation(0, x, y - 1) == UNINITIALIZED || readMapLocation(0, x, y - 1) == SENSED) &&
+                   (readMapLocation(0, x, y + 1) == UNINITIALIZED || readMapLocation(0, x, y + 1) == SENSED) &&
+                   (readMapLocation(0, x + 1, y) == UNINITIALIZED || readMapLocation(0, x + 1, y) == SENSED);  // don't need to sense middle location, others cover it
+        } else {
+            return readMapLocation(0, convertToInternalX(uc.getLocation().x), convertToInternalY(uc.getLocation().y)) == SENSED;
+        }
     }
     public boolean isPassable(Location externalLoc) {
         return readMapLocation(0, convertToInternalX(externalLoc.x), convertToInternalY(externalLoc.y)) != UNINITIALIZED;
@@ -490,6 +513,15 @@ public class Communications {
         if (bestIdx == -1) return null;
 
         final int currentDist = readMapLocation(bestIdx, curX, curY);
+//        uc.println("going to " + externalTargetLoc + ", dist " + currentDist + " " +
+//                readMapLocation(bestIdx, curX - 1, curY - 1) + " " +
+//                readMapLocation(bestIdx, curX - 1, curY) + " " +
+//                readMapLocation(bestIdx, curX - 1, curY + 1) + " " +
+//                readMapLocation(bestIdx, curX, curY - 1) + " " +
+//                readMapLocation(bestIdx, curX, curY + 1) + " " +
+//                readMapLocation(bestIdx, curX + 1, curY - 1) + " " +
+//                readMapLocation(bestIdx, curX + 1, curY) + " " +
+//                readMapLocation(bestIdx, curX + 1, curY + 1));
         if (currentDist == 0) return null;
         if (currentDist == INITIAL_DISTANCE) return Direction.ZERO;
 

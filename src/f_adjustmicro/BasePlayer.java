@@ -45,6 +45,12 @@ abstract public class BasePlayer {
         return enemies;
     }
 
+    protected void senseAndReportGrassIfNecessary() {
+        if (uc.getEnergyLeft() >= 1000 && !comms.grassAlreadySensedAtLocation()) {
+            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
+        }
+    }
+
     protected void debug(String message) {
         if (uc.getRound() >= 1450) uc.println(message);
     }
