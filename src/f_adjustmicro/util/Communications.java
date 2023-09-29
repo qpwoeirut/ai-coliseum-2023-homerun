@@ -396,7 +396,8 @@ public class Communications {
     // ------------------------------------------ DISTANCE QUEUE ------------------------------------------
 
     /**
-     * Runs a distributed 0-1 BFS, with one queue representing all the distance map queues
+     * Runs a distributed BFS, with one queue representing all the distance map queues
+     * This BFS is rather inefficient because there are two different edge weights
      * This should be the last method called before yielding
      * TODO: consider just running over the bytecode limit and then don't yield
      */
@@ -406,19 +407,19 @@ public class Communications {
         int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         while (uc.getEnergyLeft() >= DISTANCE_QUEUE_ITERATION_BYTECODE && queueStart != queueEnd) {
             final int cur = uc.read(DISTANCE_QUEUE_OFFSET + queueStart);
-
             queueStart = (queueStart + 1) % DISTANCE_QUEUE_SIZE;
+
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
 
-            if (checkLocation(queueStart - 1, mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT)) queueStart = (queueStart + DISTANCE_QUEUE_SIZE - 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueStart - 1, mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT)) queueStart = (queueStart + DISTANCE_QUEUE_SIZE - 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueStart - 1, mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT)) queueStart = (queueStart + DISTANCE_QUEUE_SIZE - 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueStart - 1, mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT)) queueStart = (queueStart + DISTANCE_QUEUE_SIZE - 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x - 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x, y - 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x, y + 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x + 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+            if (checkLocation(queueEnd, mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+            if (checkLocation(queueEnd, mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+            if (checkLocation(queueEnd, mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+            if (checkLocation(queueEnd, mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
         }
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START, queueStart);
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd);
