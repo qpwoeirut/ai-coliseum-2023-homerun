@@ -6,12 +6,14 @@ import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {
     // Add functionality to claim a function
     private Location patrolLoc = null;  // location the batter should hover around
+    private Location hqLoc;
 
     BatterPlayer(UnitController uc) {
         super(uc);
     }
 
     void run() {
+        hqLoc = uc.getLocation();
         while (true) {
             comms.checkIn();
             senseAndReportBases();
@@ -294,7 +296,7 @@ public class BatterPlayer extends BasePlayer {
         int[] scores = new int[9];
         Location currentLocation = uc.getLocation();
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
-        Location hqLocation = null; // To find HQ location
+        Location hqLocation = hqLoc; // To find HQ location
         UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
 
         for(Direction dir : Direction.values()) {
@@ -326,7 +328,7 @@ public class BatterPlayer extends BasePlayer {
             for(UnitInfo ally : allies) {
                 if(ally.getType() == UnitType.HQ) {
                     scores[index] += newLocation.distanceSquared(ally.getLocation());
-                    hqLocation = ally.getLocation();
+                    //hqLocation = ally.getLocation();
                 } else if(ally.getType() == UnitType.BATTER) {
                     scores[index] += newLocation.distanceSquared(ally.getLocation());
                 }
