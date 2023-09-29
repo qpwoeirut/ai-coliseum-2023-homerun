@@ -5,8 +5,6 @@ import aic2023.user.*;
 public class Communications {
     private final UnitController uc;
 
-    // TODO: for final code submissions, if we're tight on bytecode, we can inline the constants
-
     // for objects (bases, stadiums, water)
     // a[0] = number of specified object
     // a[4i + 1 ... 4i + 4] describes object i with (x, y, id of claiming pitcher or 0 if unclaimed, round that claim was most recently updated)
