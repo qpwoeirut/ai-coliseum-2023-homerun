@@ -331,7 +331,6 @@ public class Communications {
     public void reportNewGrassAfterObjects(Location[] grass) {
 //        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
-        int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         for (int i = grass.length - 1; i >= 0; --i) {
             final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
             if (readMapLocation(0, x, y) < PASSABLE) {
@@ -368,14 +367,12 @@ public class Communications {
                         );
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
-                            uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapIndexAndLocation(m, x, y));
-                            queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+                            addToQueue(packMapIndexAndLocation(m, x, y));
                         }
                     }
                 }
             }
         }
-        uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd);
 
         final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
         writeMapLocation(0, x, y, SENSED);
@@ -435,7 +432,7 @@ public class Communications {
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
 
-//            uc.println(uc.getRound() + " " + x + " " + y + " " + dist);
+//            uc.println("qstart: " + queueStart + ", qend: " + queueEnd + ", round: " + uc.getRound() + ", x: " + x + ", y: " + y + ", dist: " + dist);
 
             if (checkLocation(queueEnd, mapIdx, x - 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x, y - 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
@@ -467,6 +464,14 @@ public class Communications {
         return (mapIdx * MAP_DIMENSION + x) * MAP_DIMENSION + y;
     }
 
+    // adds to queue, trying to ensure that queue doesn't get messed up on bytecode overflows
+    // not used in useRemainingBytecode since the bytecode checks should be enough to avoid errors from bytecode limits
+    private void addToQueue(int value) {
+        final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
+        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, value);
+        uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, (queueEnd + 1) % DISTANCE_QUEUE_SIZE);
+    }
+
     // ------------------------------------------ DISTANCE MAPS ------------------------------------------
 
     private int findBestDistanceMapIdx(int internalCurrentX, int internalCurrentY, int internalTargetX, int internalTargetY) {
@@ -495,10 +500,7 @@ public class Communications {
         uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_Y, internalY);
 
         writeMapLocation(n, internalX, internalY, INITIAL_DISTANCE);
-
-        final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
-        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapIndexAndLocation(n, internalX, internalY));
-        uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd + 1);
+        addToQueue(packMapIndexAndLocation(n, internalX, internalY));
     }
 
     /**
