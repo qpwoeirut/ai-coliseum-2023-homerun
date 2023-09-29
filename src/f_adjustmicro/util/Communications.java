@@ -267,7 +267,7 @@ public class Communications {
         }
     }
     private int enemyUrgency(UnitType type) {
-        if (type == UnitType.BATTER) return 5;
+        if (type == UnitType.BATTER) return 10;
         if (type == UnitType.PITCHER) return 2;
         return 1;  // CATCHER
     }
