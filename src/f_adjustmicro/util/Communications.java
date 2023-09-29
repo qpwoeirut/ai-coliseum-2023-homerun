@@ -435,6 +435,8 @@ public class Communications {
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
 
+//            uc.println(uc.getRound() + " " + x + " " + y + " " + dist);
+
             if (checkLocation(queueEnd, mapIdx, x - 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x, y - 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
             if (checkLocation(queueEnd, mapIdx, x, y + 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
@@ -472,8 +474,8 @@ public class Communications {
         int bestIdx = -1;
         int minDist = INF;
         for (int i = n; i > 0; --i) {
-            final int computedDist = infIfZero(readMapLocation(i, internalCurrentX, internalCurrentY)) / 2 + infIfZero(readMapLocation(i, internalTargetX, internalTargetY));
-            // prioritize going to focal point. divide to avoid overflow
+            final int computedDist = infIfZero(readMapLocation(i, internalCurrentX, internalCurrentY)) / 10 + infIfZero(readMapLocation(i, internalTargetX, internalTargetY)) * 2;
+            // prioritize going to focal point. INF / 10 + INF * 2 should not overflow
             if (minDist > computedDist) {
                 minDist = computedDist;
                 bestIdx = i;
@@ -495,7 +497,7 @@ public class Communications {
         writeMapLocation(n, internalX, internalY, INITIAL_DISTANCE);
 
         final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
-        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, (n * MAP_DIMENSION + internalX) * MAP_DIMENSION + internalY);
+        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapAndIndex(n, internalX, internalY));
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd + 1);
     }
 
