@@ -8,6 +8,7 @@ public class BatterPlayer extends BasePlayer {
     private Location patrolLoc = null;  // location the batter should hover around
     private Location hqLoc;
     private final int BATTER_REACHABLE_DISTANCE = 8;
+    private final int BATTER_MOVABLE_DISTANCE = 12;
 
     BatterPlayer(UnitController uc) {
         super(uc);
@@ -53,7 +54,7 @@ public class BatterPlayer extends BasePlayer {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//            uc.println("enemy batter at " + nearestEnemyBatter.getLocation());
+            uc.println("enemy batter at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
             // TODO: move batters in knight's move shapes. until then we should probably just run away
 //            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
 //            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
@@ -85,7 +86,7 @@ public class BatterPlayer extends BasePlayer {
         } else {
             final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
             if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//                uc.println("enemy at " + nearestEnemy.getLocation());
+//                uc.println("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();
@@ -93,13 +94,14 @@ public class BatterPlayer extends BasePlayer {
                 if (targetEnemySightingIndex == -1) {
                     Util.tryMoveInDirection(uc, spreadOut());
                 } else {
-//                    uc.println("sighting at " + comms.returnedLocations[targetEnemySightingIndex]);
                     Direction toMove = null;
-                    final int distance = uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]);
-                    if (distance > 500) {
+                    final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
+//                    uc.println("sighting at " + comms.returnedLocations[targetEnemySightingIndex] + ", distance: " + distance);
+                    if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
                         toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex]);
-                    } else if (distance <= 30 && enemies.length <= 3) {  // try to avoid batters all going to same place by reducing urgency
-                        comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR);
+                    }
+                    if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) <= 16) {  // try to avoid batters all going to same place by reducing urgency
+                        comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR * 3);
                     }
                     if (toMove == null) {
                         toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
