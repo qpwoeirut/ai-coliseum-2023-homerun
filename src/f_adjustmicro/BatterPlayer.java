@@ -324,14 +324,9 @@ public class BatterPlayer extends BasePlayer {
                     }
                 }
             }
-
+            //fix weighting being near allies
             for(UnitInfo ally : allies) {
-                if(ally.getType() == UnitType.HQ) {
-                    scores[index] += newLocation.distanceSquared(ally.getLocation());
-                    //hqLocation = ally.getLocation();
-                } else if(ally.getType() == UnitType.BATTER) {
-                    scores[index] += newLocation.distanceSquared(ally.getLocation());
-                }
+                scores[index] += newLocation.distanceSquared(ally.getLocation());
             }
             if(hqLocation != null) scores[index] += 2 * newLocation.distanceSquared(hqLocation);
         }
