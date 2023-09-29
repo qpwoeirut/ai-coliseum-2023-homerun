@@ -33,7 +33,7 @@ public class Communications {
     private final int ENEMY_X = 1;
     private final int ENEMY_Y = 2;
     private final int ENEMY_URGENCY = 3;
-    private final int ENEMY_MERGE_DISTANCE = 40;
+    private final int ENEMY_MERGE_DISTANCE = (int)(UnitType.BATTER.getStat(UnitStat.VISION_RANGE));
 
     private final int DISTANCE_QUEUE_OFFSET = 100000;
     private final int DISTANCE_QUEUE_SIZE = 100000 - 3;
