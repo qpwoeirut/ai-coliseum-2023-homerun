@@ -348,11 +348,11 @@ public class BatterPlayer extends BasePlayer {
 
         // check if all the topIndices have the minimal score, if so then choose a random valid direction
         if(Arrays.stream(topIndices).allMatch(i -> scores[i] == Integer.MIN_VALUE)) {
-            return Direction.values()[(int)uc.getRandomDouble()*8]; // 8 for 8 possible directions including staying in place
+            return Direction.values()[(int)(uc.getRandomDouble()*8)]; // 8 for 8 possible directions including staying in place
         }
 
         // choose randomly among the top 3 directions
-        int chosenIndex = topIndices[(int) (uc.getRandomDouble() * 3)];
+        int chosenIndex = topIndices[(int) ((uc.getRandomDouble() * 3))];
         return Direction.values()[chosenIndex];
     }
 }
