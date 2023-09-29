@@ -1,7 +1,7 @@
-package g_fixgodnavlinebug;
+package g_fixgodnavbugs;
 
 import aic2023.user.*;
-import g_fixgodnavlinebug.util.Communications;
+import g_fixgodnavbugs.util.Communications;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

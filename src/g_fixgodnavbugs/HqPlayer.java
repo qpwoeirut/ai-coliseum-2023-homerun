@@ -1,4 +1,4 @@
-package g_fixgodnavlinebug;
+package g_fixgodnavbugs;
 
 import aic2023.user.*;
 
@@ -44,16 +44,16 @@ public class HqPlayer extends BasePlayer {
 
             // uc.println("Round " + uc.getRound() + ". bases: " + comms.countBases() + ", stadiums: " + comms.countStadiums() + ". batters: " + comms.countBatters() + ", catchers: " + comms.countCatchers() + ", pitchers: " + comms.countPitchers());
 
-            boolean enemyBattersNearby = false;
+            int enemyBattersNearby = 0;
             boolean[][] hasEnemyBatter = new boolean[20][20];
             for (int i = enemies.length - 1; i >= 0; --i) {
                 if (enemies[i].getType() == UnitType.BATTER) {
-                    enemyBattersNearby = true;
+                    ++enemyBattersNearby;
                     hasEnemyBatter[enemies[i].getLocation().x - hqX + OFFSET][enemies[i].getLocation().y - hqY + OFFSET] = true;
                 }
             }
 
-            if (enemyBattersNearby || comms.countBatters() * 10 < comms.listEnemySightings()) {
+            if (comms.countBatters() * 2 < enemyBattersNearby * 3 || comms.countBatters() * 10 < comms.listEnemySightings()) {
                 while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitNextToEnemy(UnitType.BATTER, hasEnemyBatter)) {
                     // recruit batters to hit the nearby enemy batters
                 }

@@ -1,7 +1,7 @@
-package g_fixgodnavlinebug;
+package g_fixgodnavbugs;
 
 import aic2023.user.*;
-import g_fixgodnavlinebug.util.Util;
+import g_fixgodnavbugs.util.Util;
 
 import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {

@@ -1,4 +1,4 @@
-package g_fixgodnavlinebug;
+package g_fixgodnavbugs;
 
 import aic2023.user.UnitController;
 import aic2023.user.UnitType;

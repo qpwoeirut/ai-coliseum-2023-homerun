@@ -1,4 +1,4 @@
-package g_fixgodnavlinebug.util;
+package g_fixgodnavbugs.util;
 
 import aic2023.user.*;
 

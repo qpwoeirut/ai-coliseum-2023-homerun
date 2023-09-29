@@ -1,7 +1,7 @@
-package g_fixgodnavlinebug;
+package g_fixgodnavbugs;
 
 import aic2023.user.*;
-import g_fixgodnavlinebug.util.Util;
+import g_fixgodnavbugs.util.Util;
 
 public class CatcherPlayer extends BasePlayer {
     CatcherPlayer(UnitController uc) {
