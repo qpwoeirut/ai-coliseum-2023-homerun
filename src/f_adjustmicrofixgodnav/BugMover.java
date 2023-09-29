@@ -1,10 +1,10 @@
-package f_adjustmicro;
+package f_adjustmicrofixgodnav;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
-import f_adjustmicro.util.IntHashMap;
-import f_adjustmicro.util.Util;
+import f_adjustmicrofixgodnav.util.IntHashMap;
+import f_adjustmicrofixgodnav.util.Util;
 
 public class BugMover {
 

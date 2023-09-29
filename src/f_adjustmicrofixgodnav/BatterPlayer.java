@@ -1,7 +1,7 @@
-package f_adjustmicro;
+package f_adjustmicrofixgodnav;
 
 import aic2023.user.*;
-import f_adjustmicro.util.Util;
+import f_adjustmicrofixgodnav.util.Util;
 import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {
     // Add functionality to claim a function

@@ -1,7 +1,7 @@
-package f_adjustmicro;
+package f_adjustmicrofixgodnav;
 
 import aic2023.user.*;
-import f_adjustmicro.util.Util;
+import f_adjustmicrofixgodnav.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
     PitcherPlayer(UnitController uc) {
