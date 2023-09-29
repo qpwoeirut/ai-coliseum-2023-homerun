@@ -368,7 +368,7 @@ public class Communications {
                         );
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
-                            uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapAndIndex(m, x, y));
+                            uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapIndexAndLocation(m, x, y));
                             queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
                         }
                     }
@@ -454,7 +454,7 @@ public class Communications {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
-                uc.write(DISTANCE_QUEUE_OFFSET + queueIdx, packMapAndIndex(mapIdx, newX, newY));
+                uc.write(DISTANCE_QUEUE_OFFSET + queueIdx, packMapIndexAndLocation(mapIdx, newX, newY));
                 return true;
             }
         } else {
@@ -463,7 +463,7 @@ public class Communications {
         return false;
     }
 
-    private int packMapAndIndex(int mapIdx, int x, int y) {
+    private int packMapIndexAndLocation(int mapIdx, int x, int y) {
         return (mapIdx * MAP_DIMENSION + x) * MAP_DIMENSION + y;
     }
 
@@ -497,7 +497,7 @@ public class Communications {
         writeMapLocation(n, internalX, internalY, INITIAL_DISTANCE);
 
         final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
-        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapAndIndex(n, internalX, internalY));
+        uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, packMapIndexAndLocation(n, internalX, internalY));
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd + 1);
     }
 
