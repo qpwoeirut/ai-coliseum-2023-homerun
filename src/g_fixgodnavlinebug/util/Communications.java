@@ -37,7 +37,6 @@ public class Communications {
     private final int DISTANCE_QUEUE_SIZE = 100000 - 3;
     private final int DISTANCE_QUEUE_START = DISTANCE_QUEUE_SIZE;
     private final int DISTANCE_QUEUE_END = DISTANCE_QUEUE_SIZE + 1;
-    private final int DISTANCE_QUEUE_ITERATION_BYTECODE = 900;
 
     private final int MAP_OFFSET = 200000;
     private final int MAP_DIMENSION = 123;
@@ -418,43 +417,38 @@ public class Communications {
      * This BFS is rather inefficient because there are two different edge weights
      * This should be the last method called before yielding
      */
-    public void useRemainingBytecode() {
-        if (uc.getEnergyLeft() < DISTANCE_QUEUE_ITERATION_BYTECODE) return;
-        int queueStart = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START);
-        int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
-        while (uc.getEnergyLeft() >= DISTANCE_QUEUE_ITERATION_BYTECODE && queueStart != queueEnd) {
-            final int cur = uc.read(DISTANCE_QUEUE_OFFSET + queueStart);
-            queueStart = (queueStart + 1) % DISTANCE_QUEUE_SIZE;
+    public void useRemainingBytecode(int currentRound) {
+        // as long as we have enough bytecode to get through the queueStart read/write, it's okay
+        while (uc.getRound() == currentRound && uc.getEnergyLeft() >= 50) {
+            // move queue pointer writes/reads to be as close together as possible
+            final int queueStart = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START);
+            if (queueStart == uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END)) return;
+            uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START, (queueStart + 1) % DISTANCE_QUEUE_SIZE);
 
+            final int cur = uc.read(DISTANCE_QUEUE_OFFSET + queueStart);
+            if (cur == 0) uc.println("This is bad! cur = 0, queueStart = " + queueStart);
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
-
-//            uc.println("qstart: " + queueStart + ", qend: " + queueEnd + ", round: " + uc.getRound() + ", x: " + x + ", y: " + y + ", dist: " + dist);
-
-            if (checkLocation(queueEnd, mapIdx, x - 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x, y - 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x, y + 1, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x + 1, y, dist, DISTANCE_UNIT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
-            if (checkLocation(queueEnd, mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT)) queueEnd = (queueEnd + 1) % DISTANCE_QUEUE_SIZE;
+            checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x, y + 1, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x + 1, y, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT);
         }
-        uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START, queueStart);
-        uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, queueEnd);
     }
 
-    private boolean checkLocation(int queueIdx, int mapIdx, int newX, int newY, int dist, int distChange) {
+    private void checkLocation(int mapIdx, int newX, int newY, int dist, int distChange) {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
-                uc.write(DISTANCE_QUEUE_OFFSET + queueIdx, packMapIndexAndLocation(mapIdx, newX, newY));
-                return true;
+                addToQueue(packMapIndexAndLocation(mapIdx, newX, newY));
             }
         } else {
             writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
         }
-        return false;
     }
 
     private int packMapIndexAndLocation(int mapIdx, int x, int y) {
@@ -462,8 +456,10 @@ public class Communications {
     }
 
     // adds to queue, trying to ensure that queue doesn't get messed up on bytecode overflows
-    // not used in useRemainingBytecode since the bytecode checks should be enough to avoid errors from bytecode limits
-    private void addToQueue(int value) {
+    // some benchmarking suggests that one invocation of this method costs 30 bytecode + any wasted on the first line
+    // removing the first line would save 5 bytecode for a normal invocation
+    public void addToQueue(int value) {
+        while (uc.getEnergyLeft() <= 31);  // wait until we run out of bytecode and next turn starts
         final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, value);
         uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END, (queueEnd + 1) % DISTANCE_QUEUE_SIZE);
@@ -496,8 +492,8 @@ public class Communications {
         uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_X, internalX);
         uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_Y, internalY);
 
-        writeMapLocation(n, internalX, internalY, INITIAL_DISTANCE);
-        addToQueue(packMapIndexAndLocation(n, internalX, internalY));
+        writeMapLocation(n + 1, internalX, internalY, INITIAL_DISTANCE);
+        addToQueue(packMapIndexAndLocation(n + 1, internalX, internalY));
     }
 
     /**
@@ -514,27 +510,28 @@ public class Communications {
         if (bestIdx == -1) return null;
 
         final int currentDist = readMapLocation(bestIdx, curX, curY);
-//        uc.println("going to " + externalTargetLoc + ", dist " + currentDist + " " +
-//                readMapLocation(bestIdx, curX - 1, curY - 1) + " " +
-//                readMapLocation(bestIdx, curX - 1, curY) + " " +
-//                readMapLocation(bestIdx, curX - 1, curY + 1) + " " +
-//                readMapLocation(bestIdx, curX, curY - 1) + " " +
-//                readMapLocation(bestIdx, curX, curY + 1) + " " +
-//                readMapLocation(bestIdx, curX + 1, curY - 1) + " " +
-//                readMapLocation(bestIdx, curX + 1, curY) + " " +
-//                readMapLocation(bestIdx, curX + 1, curY + 1));
+//        uc.println("going to " + externalTargetLoc + ", dist " + currentDist);
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY + 1) + " " + readMapLocation(bestIdx, curX, curY + 1) + " " + readMapLocation(bestIdx, curX + 1, curY + 1));
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY) + "         " + readMapLocation(bestIdx, curX + 1, curY));
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY - 1) + " " + readMapLocation(bestIdx, curX, curY - 1) + " " + readMapLocation(bestIdx, curX + 1, curY - 1));
         if (currentDist == 0) return null;
         if (currentDist == INITIAL_DISTANCE) return Direction.ZERO;
 
-        if (uc.canMove(Direction.NORTHWEST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + Direction.NORTHWEST.dx, curY + Direction.NORTHWEST.dy)) return Direction.NORTHWEST;
-        if (uc.canMove(Direction.NORTHEAST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + Direction.NORTHEAST.dx, curY + Direction.NORTHEAST.dy)) return Direction.NORTHEAST;
-        if (uc.canMove(Direction.SOUTHWEST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + Direction.SOUTHWEST.dx, curY + Direction.SOUTHWEST.dy)) return Direction.SOUTHWEST;
-        if (uc.canMove(Direction.SOUTHEAST) && currentDist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + Direction.SOUTHEAST.dx, curY + Direction.SOUTHEAST.dy)) return Direction.SOUTHEAST;
-        if (uc.canMove(Direction.NORTH) && currentDist - DISTANCE_UNIT == readMapLocation(bestIdx, curX + Direction.NORTH.dx, curY + Direction.NORTH.dy)) return Direction.NORTH;
-        if (uc.canMove(Direction.EAST) && currentDist - DISTANCE_UNIT == readMapLocation(bestIdx, curX + Direction.EAST.dx, curY + Direction.EAST.dy)) return Direction.EAST;
-        if (uc.canMove(Direction.SOUTH) && currentDist - DISTANCE_UNIT == readMapLocation(bestIdx, curX + Direction.SOUTH.dx, curY + Direction.SOUTH.dy)) return Direction.SOUTH;
-        if (uc.canMove(Direction.WEST) && currentDist - DISTANCE_UNIT == readMapLocation(bestIdx, curX + Direction.WEST.dx, curY + Direction.WEST.dy)) return Direction.WEST;
-        return Direction.ZERO;
+        Direction best = Direction.ZERO;
+        int bestDist = INF;
+        if (uc.canMove(Direction.NORTH) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.NORTH.dx, curY + Direction.NORTH.dy)) + DISTANCE_UNIT) { best = Direction.NORTH; bestDist = readMapLocation(bestIdx, curX + Direction.NORTH.dx, curY + Direction.NORTH.dy) + DISTANCE_UNIT; }
+        if (uc.canMove(Direction.EAST ) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.EAST.dx , curY + Direction.EAST.dy )) + DISTANCE_UNIT) { best = Direction.EAST ; bestDist = readMapLocation(bestIdx, curX + Direction.EAST.dx , curY + Direction.EAST.dy ) + DISTANCE_UNIT; }
+        if (uc.canMove(Direction.SOUTH) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.SOUTH.dx, curY + Direction.SOUTH.dy)) + DISTANCE_UNIT) { best = Direction.SOUTH; bestDist = readMapLocation(bestIdx, curX + Direction.SOUTH.dx, curY + Direction.SOUTH.dy) + DISTANCE_UNIT; }
+        if (uc.canMove(Direction.WEST ) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.WEST.dx , curY + Direction.WEST.dy )) + DISTANCE_UNIT) { best = Direction.WEST ; bestDist = readMapLocation(bestIdx, curX + Direction.WEST.dx , curY + Direction.WEST.dy ) + DISTANCE_UNIT; }
+        if (uc.canMove(Direction.NORTHWEST) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.NORTHWEST.dx, curY + Direction.NORTHWEST.dy) + DISTANCE_ROOT)) { best = Direction.NORTHWEST; bestDist = readMapLocation(bestIdx, curX + Direction.NORTHWEST.dx, curY + Direction.NORTHWEST.dy) + DISTANCE_ROOT; }
+        if (uc.canMove(Direction.NORTHEAST) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.NORTHEAST.dx, curY + Direction.NORTHEAST.dy) + DISTANCE_ROOT)) { best = Direction.NORTHEAST; bestDist = readMapLocation(bestIdx, curX + Direction.NORTHEAST.dx, curY + Direction.NORTHEAST.dy) + DISTANCE_ROOT; }
+        if (uc.canMove(Direction.SOUTHWEST) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.SOUTHWEST.dx, curY + Direction.SOUTHWEST.dy) + DISTANCE_ROOT)) { best = Direction.SOUTHWEST; bestDist = readMapLocation(bestIdx, curX + Direction.SOUTHWEST.dx, curY + Direction.SOUTHWEST.dy) + DISTANCE_ROOT; }
+        if (uc.canMove(Direction.SOUTHEAST) && bestDist > infIfZero(readMapLocation(bestIdx, curX + Direction.SOUTHEAST.dx, curY + Direction.SOUTHEAST.dy) + DISTANCE_ROOT)) { best = Direction.SOUTHEAST; bestDist = readMapLocation(bestIdx, curX + Direction.SOUTHEAST.dx, curY + Direction.SOUTHEAST.dy) + DISTANCE_ROOT; }
+
+        // if we can only move further away, then just don't move
+        // if the direction ordinal is even, it's N/E/S/W, otherwise it's diagonal
+        // best == ZERO is an edge case where the above isn't true, but then both possible return values are ZERO, so it's fine
+        return bestDist - (best.ordinal() % 2 == 0 ? DISTANCE_UNIT : DISTANCE_ROOT) < currentDist ? best : Direction.ZERO;
     }
     public int directionsFromFocalPoint(Location externalTargetLoc) {
         int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);

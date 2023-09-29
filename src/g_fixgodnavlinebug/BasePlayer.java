@@ -54,7 +54,7 @@ abstract public class BasePlayer {
     protected void endTurn() {
         final int currentRound = uc.getRound();
         senseAndReportGrassIfNecessary();
-        if (uc.getRound() == currentRound) comms.useRemainingBytecode();
+        comms.useRemainingBytecode(currentRound);
         if (uc.getRound() == currentRound) uc.yield();
     }
 
