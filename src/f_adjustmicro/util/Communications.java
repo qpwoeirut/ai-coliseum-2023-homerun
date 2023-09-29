@@ -255,6 +255,16 @@ public class Communications {
         }
         uc.write(ENEMY_SIGHTING_OFFSET, currentSightingCount + idx + 1);
     }
+    public void reduceSightingUrgency(Location loc, int urgencyDecrease) {
+        final int currentSightingCount = uc.read(ENEMY_SIGHTING_OFFSET);
+
+        for (int i = currentSightingCount - 1; i >= 0; --i) {
+            if (loc.x == readSightingProperty(i, ENEMY_X) && loc.y == readSightingProperty(i, ENEMY_Y)) {
+                writeSightingProperty(i, ENEMY_URGENCY, readSightingProperty(i, ENEMY_URGENCY) - urgencyDecrease);
+                return;
+            }
+        }
+    }
     private int enemyUrgency(UnitType type) {
         if (type == UnitType.BATTER) return 5;
         if (type == UnitType.PITCHER) return 2;
@@ -315,8 +325,9 @@ public class Communications {
     // ------------------------------------------ GLOBAL MAP ------------------------------------------
     // we report grass instead of water to ensure we don't run into issues where water suddenly appears and blocks off a computed path
     // this way, we assume everything is blocked until we see otherwise
-    public void reportNewGrass(Location[] grass) {
     // this must be called AFTER reportNewBases/Stadiums
+    // ideally call this at the end of the turn
+    public void reportNewGrassAfterObjects(Location[] grass) {
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         for (int i = grass.length - 1; i >= 0; --i) {

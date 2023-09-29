@@ -19,7 +19,7 @@ public class CatcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
+            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);

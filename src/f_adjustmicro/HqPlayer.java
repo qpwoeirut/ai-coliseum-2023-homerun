@@ -10,9 +10,10 @@ public class HqPlayer extends BasePlayer {
     }
 
     void run() {
-        senseAndReportBases();
+        Location[] visibleBases = senseAndReportBases();
         Location[] visibleStadiums = senseAndReportStadiums();
-        comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 48));  // outer grass will be reported on rounds 2 and 3
+        final int grassSensingIncrement = Math.max(2, 20 / (visibleBases.length + visibleStadiums.length + 1));
+        int currentGrassVision = grassSensingIncrement;
 
         // handle first turn separately, if we can see a stadium
         if (visibleStadiums.length >= 2) {
@@ -36,11 +37,6 @@ public class HqPlayer extends BasePlayer {
         final int hqY = uc.getLocation().y;
         // handle other turns
         while (true) {
-            // first round is round 0
-            if (uc.getRound() == 1) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 16));
-            if (uc.getRound() == 2) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION - 6));
-            if (uc.getRound() == 3) comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
-
             comms.checkIn();
             comms.decayEnemySightingUrgencies();
             UnitInfo[] enemies = senseAndReportEnemies();
@@ -73,6 +69,14 @@ public class HqPlayer extends BasePlayer {
                 recruitUnitSafely(UnitType.CATCHER, hasEnemyBatter);
             }
 
+            // first round is round 0
+            if (currentGrassVision < VISION) {
+                comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+                currentGrassVision = Math.min(currentGrassVision + grassSensingIncrement, (int)VISION);
+            } else if (currentGrassVision == VISION) {
+                comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+                ++currentGrassVision;
+            }
             comms.useRemainingBytecode();
             uc.yield();
         }

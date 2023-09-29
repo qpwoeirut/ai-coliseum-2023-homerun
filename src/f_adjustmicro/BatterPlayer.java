@@ -18,7 +18,7 @@ public class BatterPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
-            comms.reportNewGrass(uc.senseObjects(MapObject.GRASS, VISION));
+            comms.reportNewGrassAfterObjects(uc.senseObjects(MapObject.GRASS, VISION));
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
@@ -91,8 +91,11 @@ public class BatterPlayer extends BasePlayer {
                     Util.tryMoveInDirection(uc, spreadOut());
                 } else {
                     Direction toMove = null;
-                    if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) > 500) {
+                    final int distance = uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]);
+                    if (distance > 500) {
                         toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex]);
+                    } else if (distance <= 30 && enemies.length <= 3) {  // try to avoid batters all going to same place by reducing urgency
+                        comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR);
                     }
                     if (toMove == null) {
                         toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
