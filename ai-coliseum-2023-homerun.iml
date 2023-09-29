@@ -24,6 +24,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/z_demoplayer" />
       <excludeFolder url="file://$MODULE_DIR$/src/z_nullplayer" />
       <excludeFolder url="file://$MODULE_DIR$/src/f_adjustmicrofixgodnav" />
+      <excludeFolder url="file://$MODULE_DIR$/challenges" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
