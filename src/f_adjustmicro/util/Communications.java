@@ -331,7 +331,7 @@ public class Communications {
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         for (int i = grass.length - 1; i >= 0; --i) {
-            final int x = convertToInternalX(grass[i].x), y = grass[i].y;
+            final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
             if (readMapLocation(0, x, y) != PASSABLE) {
                 writeMapLocation(0, x, y, PASSABLE);
                 if (x % 10 == 0 && y % 10 == 0) {
