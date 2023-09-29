@@ -599,11 +599,11 @@ public class Communications {
         final int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
         final int internalX = convertToInternalX(externalLoc.x), internalY = convertToInternalY(externalLoc.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
-        int ubDist = 0;
+        int lbDist = (int)(Math.sqrt(uc.getLocation().distanceSquared(externalLoc)) * DISTANCE_UNIT);
         for (int i = n; i > 0; --i) {
-            ubDist = Math.max(ubDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
+            lbDist = Math.max(lbDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
         }
-        return ubDist;
+        return lbDist;
     }
 
     private int infIfZero(int x) {
