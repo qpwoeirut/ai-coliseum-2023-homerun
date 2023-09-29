@@ -21,7 +21,7 @@ abstract public class BasePlayer {
         } else if (uc.getType() == UnitType.CATCHER) {
             URGENCY_FACTOR = 2;
         } else if (uc.getType() == UnitType.PITCHER) {
-            URGENCY_FACTOR = 4;
+            URGENCY_FACTOR = 10;
         } else if (uc.getType() == UnitType.HQ) {
             URGENCY_FACTOR = 6;
         } else URGENCY_FACTOR = 1;
