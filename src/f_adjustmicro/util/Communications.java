@@ -505,7 +505,7 @@ public class Communications {
     }
     public int directionsFromFocalPoint(Location externalTargetLoc) {
         int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
-        final int bestIdx = findBestDistanceMapIdx(convertToInternalX(uc.getLocation().x), convertToInternalY(uc.getLocation().y), curX, curY);
+        final int bestIdx = findBestDistanceMapIdx(convertToInternalX(externalTargetLoc.x), convertToInternalY(externalTargetLoc.y), curX, curY);
         int dist = infIfZero(readMapLocation(bestIdx, curX, curY));
         int n = 0;
         while (dist > INITIAL_DISTANCE) {
