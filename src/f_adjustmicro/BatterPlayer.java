@@ -2,16 +2,18 @@ package f_adjustmicro;
 
 import aic2023.user.*;
 import f_adjustmicro.util.Util;
-
+import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {
     // Add functionality to claim a function
     private Location patrolLoc = null;  // location the batter should hover around
+    private Location hqLoc;
 
     BatterPlayer(UnitController uc) {
         super(uc);
     }
 
     void run() {
+        hqLoc = uc.getLocation();
         while (true) {
             comms.checkIn();
             senseAndReportBases();
@@ -267,28 +269,90 @@ public class BatterPlayer extends BasePlayer {
     Direction spreadOut() {
         return spreadOut(0, 0);
     }
+
     Direction spreadOut(float weightX, float weightY) {
         final Location currentLocation = uc.getLocation();
         float x = currentLocation.x, y = currentLocation.y;
         UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
         float dist;
-        float allyWeightX = 0, allyWeightY = 0;
+        float allyWeightX = 1, allyWeightY = 1;
         Location loc;
         for (int i = allies.length; i --> 0;) {
             if (allies[i].getType() == UnitType.BATTER || allies[i].getType() == UnitType.PITCHER) {
                 loc = allies[i].getLocation();
-                // add 0.01 to avoid div by 0 when running out of bytecode
-                dist = currentLocation.distanceSquared(loc) + 0.01f;
-                // subtract since we want to move away
+                dist = currentLocation.distanceSquared(loc) + 0.01f; // Avoid div by 0
                 allyWeightX -= (loc.x - x) / dist;
                 allyWeightY -= (loc.y - y) / dist;
             }
         }
-        weightX += allyWeightX * 10;
-        weightY += allyWeightY * 10;
+        weightX += allyWeightX * 30;
+        weightY += allyWeightY * 30;
 
         int finalDx = uc.getRandomDouble() * 40 > weightX + 20 ? -1 : 1;
         int finalDy = uc.getRandomDouble() * 40 > weightY + 20 ? -1 : 1;
         return Direction.getDirection(finalDx, finalDy);
+    }
+    Direction calculateMovementDirection() {
+        int[] scores = new int[9];
+        Location currentLocation = uc.getLocation();
+        UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
+        Location hqLocation = hqLoc; // To find HQ location
+        UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
+
+        for(Direction dir : Direction.values()) {
+            int index = dir.ordinal();
+            Location newLocation = currentLocation.add(dir);
+
+            // batter micro to make sure you aren't being hit into water or a friendly unit
+            for(UnitInfo enemy : enemies) {
+                if(enemy.getType() == UnitType.BATTER) {
+                    int distanceToEnemy = newLocation.distanceSquared(enemy.getLocation());
+                    if(distanceToEnemy <= 2) {
+                        Location potentialHitLocation = newLocation.add(newLocation.directionTo(enemy.getLocation()));
+                        if(uc.senseObjectAtLocation(potentialHitLocation, true) == MapObject.WATER
+                                && uc.getLocation().distanceSquared(potentialHitLocation) <= 3) {
+                            // assign a very low score if this condition is met.
+                            scores[index] = Integer.MIN_VALUE;
+                            continue;
+                        }
+                        // additional Check for Friendly Unit
+                        UnitInfo potentialFriendlyUnit = uc.senseUnitAtLocation(potentialHitLocation);
+                        if (potentialFriendlyUnit != null && potentialFriendlyUnit.getTeam() == uc.getTeam()) {
+                            scores[index] = Integer.MIN_VALUE;
+                            continue;
+                        }
+                    }
+                }
+            }
+            //fix weighting being near allies
+            for(UnitInfo ally : allies) {
+                scores[index] += newLocation.distanceSquared(ally.getLocation());
+            }
+            if(hqLocation != null) scores[index] += 2 * newLocation.distanceSquared(hqLocation);
+        }
+
+        // Find the top 3 scores and randomly choose among them
+        int[] topIndices = new int[] {-1, -1, -1};
+        for(int i = 0; i < 9; i++) {
+            if(topIndices[0] == -1 || scores[i] > scores[topIndices[0]]) {
+                topIndices[2] = topIndices[1];
+                topIndices[1] = topIndices[0];
+                topIndices[0] = i;
+            } else if(topIndices[1] == -1 || scores[i] > scores[topIndices[1]]) {
+                topIndices[2] = topIndices[1];
+                topIndices[1] = i;
+            } else if(topIndices[2] == -1 || scores[i] > scores[topIndices[2]]) {
+                topIndices[2] = i;
+            }
+        }
+
+        // check if all the topIndices have the minimal score, if so then choose a random valid direction
+        if(Arrays.stream(topIndices).allMatch(i -> scores[i] == Integer.MIN_VALUE)) {
+            return Direction.values()[(int)(uc.getRandomDouble()*8)]; // 8 for 8 possible directions including staying in place
+        }
+
+        // choose randomly among the top 3 directions
+        int chosenIndex = topIndices[(int) ((uc.getRandomDouble() * 3))];
+        return Direction.values()[chosenIndex];
     }
 }
