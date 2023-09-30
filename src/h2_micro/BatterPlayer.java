@@ -68,7 +68,7 @@ public class BatterPlayer extends BasePlayer {
 //                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
 //            }
 
-            int bestDir = Direction.ZERO.ordinal();
+            int bestDir = -1;
             int bestChebyshevDist = Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation());
             bestChebyshevDist = bestChebyshevDist <= 2 ? 100 : bestChebyshevDist;
             for (int i = 7; i >= 0; --i) {
@@ -80,7 +80,7 @@ public class BatterPlayer extends BasePlayer {
                     }
                 }
             }
-            if (uc.canMove(Direction.values()[bestDir])) {
+            if (bestDir != -1 && uc.canMove(Direction.values()[bestDir])) {
                 uc.move(Direction.values()[bestDir]);
             }
         } else {
@@ -106,7 +106,7 @@ public class BatterPlayer extends BasePlayer {
                     if (toMove == null) {
                         toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
                     }
-                    if (uc.canMove(toMove)) {
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
                         uc.move(toMove);
                     } else {
                         Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
@@ -135,7 +135,7 @@ public class BatterPlayer extends BasePlayer {
                 //outside idle zone
                 else{
                     final Direction toMove = bg.move(patrolLoc);
-                    if (uc.canMove(toMove)) {
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
                         uc.move(toMove);
                     }
                 }
@@ -151,7 +151,7 @@ public class BatterPlayer extends BasePlayer {
                 }
                 else{
                     final Direction toMove = bg.move(patrolLoc);
-                    if (uc.canMove(toMove)) {
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
                         uc.move(toMove);
                     }
                 }
