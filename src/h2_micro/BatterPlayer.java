@@ -24,6 +24,7 @@ public class BatterPlayer extends BasePlayer {
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
+            final int directionOkay = calculateOkayDirections(enemies);
 //            debug("Enemies: " + enemies.length);
             if (uc.canAct()) {
                 final UnitInfo toAttack = pickTargetToAttack(enemies);
@@ -36,13 +37,13 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
-//            debugBytecode("after attack");
+            debugBytecode("after attack");
 
             if (uc.canMove()) {
                 if (patrolLoc != null) {
                     patrol(enemies);
                 } else {
-                    normalBehavior(enemies);
+                    normalBehavior(enemies, directionOkay);
                 }
             }
 
@@ -50,7 +51,7 @@ public class BatterPlayer extends BasePlayer {
         }
     }
 
-    void normalBehavior(UnitInfo[] enemies) {
+    void normalBehavior(UnitInfo[] enemies, int directionOkay) {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
@@ -69,10 +70,9 @@ public class BatterPlayer extends BasePlayer {
 //            }
 
             int bestDir = -1;
-            int bestChebyshevDist = Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation());
-            bestChebyshevDist = bestChebyshevDist <= 2 ? 100 : bestChebyshevDist;
-            for (int i = 7; i >= 0; --i) {
-                if (uc.canMove(Direction.values()[i])) {
+            int bestChebyshevDist = 100;
+            for (int i = 8; i >= 0; --i) {
+                if (((directionOkay >> i) & 1) > 0 && uc.canMove(Direction.values()[i])) {
                     final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
                     if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance > 2) {
                         bestChebyshevDist = nearestChebyshevDistance;
@@ -80,7 +80,7 @@ public class BatterPlayer extends BasePlayer {
                     }
                 }
             }
-            if (bestDir != -1 && uc.canMove(Direction.values()[bestDir])) {
+            if (bestDir != -1 && bestDir != 8 && uc.canMove(Direction.values()[bestDir])) {
                 uc.move(Direction.values()[bestDir]);
             }
         } else {
@@ -94,22 +94,19 @@ public class BatterPlayer extends BasePlayer {
                 if (targetEnemySightingIndex == -1) {
                     Util.tryMoveInDirection(uc, spreadOut());
                 } else {
-                    Direction toMove = null;
-                    final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
 //                    uc.println("sighting at " + comms.returnedLocations[targetEnemySightingIndex] + ", distance: " + distance);
-                    if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
-                        toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex]);
-                    }
                     if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) <= 16) {  // try to avoid batters all going to same place by reducing urgency
                         comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR * 3);
                     }
-                    if (toMove == null) {
-                        toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                    Direction toMove = null;
+                    final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
+                    if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
+                        toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex], directionOkay);
                     }
-                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove)) {
                         uc.move(toMove);
                     } else {
-                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]));
+                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]), directionOkay);
                     }
                 }
             }
@@ -128,7 +125,7 @@ public class BatterPlayer extends BasePlayer {
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {//no enemies within range
                 //within idle zone
-                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE) {
                     //randomly move around in the zone
                     Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
                 }
@@ -160,7 +157,7 @@ public class BatterPlayer extends BasePlayer {
     }
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
-//        debugBytecode("pickTarget start");
+        debugBytecode("pickTarget start");
 
         UnitInfo toAttack = null;
         int bestAttackScore = -1;
@@ -171,8 +168,8 @@ public class BatterPlayer extends BasePlayer {
                 // score by attack effectiveness (how much net reputation we gain), tiebreak by closest enemy
                 // batters are implicitly targeted first because they are worth 60 rep, which is more than the others
 
-                // add 2 because we want to attack anything within distance 2 no matter what
-                final int attackScore = 10 * (val / 9) - uc.getLocation().distanceSquared(enemies[i].getLocation()) + 2;
+                // add 2 because we want to attack anything chebyshev within distance 2 no matter what
+                final int attackScore = 10 * (val / 9) - uc.getLocation().distanceSquared(enemies[i].getLocation()) + 8;
                 if (bestAttackScore < attackScore) {
                     bestAttackScore = attackScore;
                     toAttack = enemies[i];
@@ -180,7 +177,7 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-//        debugBytecode("pickTarget end");
+        debugBytecode("pickTarget end. score = " + bestAttackScore);
         return toAttack;
     }
 
@@ -221,14 +218,14 @@ public class BatterPlayer extends BasePlayer {
         }
 
         int bestDir = -1;
-        int bestEffectiveness = -1;
+        int bestEffectiveness = 0;
         // try cardinal directions first so that move cooldown is smaller
         for (int i = 8; i >= 0; --i) {
             if (uc.canMove(Direction.values()[i])) {
                 final Location loc = uc.getLocation().add(Direction.values()[i]);
                 if (loc.distanceSquared(target.getLocation()) <= 2) {
                     final int effectiveness = hitEffectiveness(target, loc.directionTo(target.getLocation()));
-                    if (bestEffectiveness < effectiveness) {
+                    if (bestEffectiveness <= effectiveness) {
                         bestEffectiveness = effectiveness;
                         bestDir = i;
                     }

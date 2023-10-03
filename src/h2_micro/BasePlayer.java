@@ -2,6 +2,7 @@ package h2_micro;
 
 import aic2023.user.*;
 import h2_micro.util.Communications;
+import h2_micro.util.Util;
 
 abstract public class BasePlayer {
     protected final UnitController uc;
@@ -58,8 +59,47 @@ abstract public class BasePlayer {
         if (uc.getRound() == currentRound) uc.yield();
     }
 
+    // turnsBeforeCanMove is the floor of the current cooldown (possibly after moving to loc)
+    // ignores water
+    protected boolean enemyBatterCanHitLocation(float movementCooldown, Location loc, UnitInfo[] enemies) {
+        int turnsBeforeCanMove = (int)movementCooldown;
+        debug("turns: " + turnsBeforeCanMove + ", loc: " + loc);
+        for (int i = enemies.length - 1; i >= 0; --i) {
+            debug(i + " " + enemies[i].getCurrentActionCooldown() + " " + enemies[i].getCurrentMovementCooldown() + " " + Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()));
+            if (enemies[i].getType() == UnitType.BATTER &&
+                    turnsBeforeCanMove >= (int)(enemies[i].getCurrentActionCooldown() - 1) &&
+                    Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + (int)(enemies[i].getCurrentMovementCooldown() - 1) <= turnsBeforeCanMove + 1.01f &&
+                    comms.lowerBoundDistance(loc, enemies[i].getLocation()) <= (2 + turnsBeforeCanMove) * comms.DISTANCE_ROOT
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean enemyBatterCanHitNewLocation(Direction dir, UnitInfo[] enemies) {
+        return enemyBatterCanHitLocation(
+                uc.getInfo().getCurrentMovementCooldown() + uc.getType().getStat(UnitStat.MOVEMENT_COOLDOWN) * (dir.ordinal() % 2 == 1 ? 1.14142f : 1f),
+                uc.getLocation().add(dir),
+                enemies
+        );
+    }
+
+    protected int calculateOkayDirections(UnitInfo[] enemies) {
+        return  // i'th bit represent direction with ordinal i
+                (enemyBatterCanHitNewLocation(Direction.NORTH    , enemies) ? 0 : 1     ) |
+                (enemyBatterCanHitNewLocation(Direction.NORTHWEST, enemies) ? 0 : 1 << 1) |
+                (enemyBatterCanHitNewLocation(Direction.WEST     , enemies) ? 0 : 1 << 2) |
+                (enemyBatterCanHitNewLocation(Direction.SOUTHWEST, enemies) ? 0 : 1 << 3) |
+                (enemyBatterCanHitNewLocation(Direction.SOUTH    , enemies) ? 0 : 1 << 4) |
+                (enemyBatterCanHitNewLocation(Direction.SOUTHEAST, enemies) ? 0 : 1 << 5) |
+                (enemyBatterCanHitNewLocation(Direction.EAST     , enemies) ? 0 : 1 << 6) |
+                (enemyBatterCanHitNewLocation(Direction.NORTHEAST, enemies) ? 0 : 1 << 7) |
+                (enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies) ? 0 : 1 << 8);
+    }
+
     protected void debug(String message) {
-        if (uc.getRound() <= 200) uc.println(message);
+        if (uc.getRound() <= 100) uc.println(message);
     }
 
     protected void debugBytecode(String message) {

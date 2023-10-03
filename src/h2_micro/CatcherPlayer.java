@@ -22,7 +22,8 @@ public class CatcherPlayer extends BasePlayer {
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 4) {
+            debug("nearest enemy batter is " + nearestEnemyBatter);
+            if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
 
@@ -34,7 +35,9 @@ public class CatcherPlayer extends BasePlayer {
             }
             final Direction dir = bg.move(spawn.add(scoutDir.dx * 55, scoutDir.dy * 55));
             if (dir != null && dir != Direction.ZERO) {
-                uc.move(dir);
+                Util.tryMoveInOkayDirection(uc, dir, calculateOkayDirections(enemies));
+            } else {
+                Util.tryMoveInOkayDirection(uc, scoutDir, calculateOkayDirections(enemies));
             }
 
             endTurn();

@@ -18,9 +18,11 @@ public class PitcherPlayer extends BasePlayer {
             senseAndReportStadiums();
 
             final UnitInfo[] enemies = senseAndReportEnemies();
+            final int directionOkay = calculateOkayDirections(enemies);
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            if (nearestEnemyBatter != null && Util.chebyshevDistance(uc.getLocation(), nearestEnemyBatter.getLocation()) <= 4 && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * 5) {
-                Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
+            debug("directionOkay = " + directionOkay);
+            if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
+                Util.tryMoveInOkayDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()), directionOkay);
             }
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
@@ -32,10 +34,10 @@ public class PitcherPlayer extends BasePlayer {
                     comms.updateClaimOnStadium(claimedObjectId);
                 }
                 if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
-                    Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation);
-                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
-                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
-                        uc.move(toMove);
+                    Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
+                    if (toMove == null) toMove = uc.getLocation().directionTo(claimedObjectLocation);
+                    if (toMove != Direction.ZERO) {
+                        Util.tryMoveInOkayDirection(uc, toMove, directionOkay);
                     }
                 }
             } else {

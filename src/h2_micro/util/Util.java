@@ -93,6 +93,17 @@ public class Util {
         return Math.max(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y);
     }
 
+    public static float movementDistance(Location a, Location b) {
+        int max = Util.chebyshevDistance(a, b);
+        return max + (max - Math.min(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y)) * 1.14142f;
+    }
+
+    public static float movementAdjacentDistance(Location a, Location b) {
+        final int dx = Math.max(0, Math.abs(a.x - b.x) - 1);
+        final int dy = Math.max(0, Math.abs(a.y - b.y) - 1);
+        return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.14142f;
+    }
+
     public static int getMaxIndex(int[] values, int n) {
         if (n <= 0) return -1;
         int bestValue = values[0];
@@ -118,6 +129,14 @@ public class Util {
         else if (uc.canMove(dir.rotateRight())) uc.move(dir.rotateRight());
         else if (uc.canMove(dir.rotateLeft().rotateLeft())) uc.move(dir.rotateLeft().rotateLeft());
         else if (uc.canMove(dir.rotateRight().rotateRight())) uc.move(dir.rotateRight().rotateRight());
+    }
+
+    public static void tryMoveInOkayDirection(UnitController uc, Direction dir, int directionOkay) {
+        if (uc.canMove(dir) && ((directionOkay >> dir.ordinal()) & 1) > 0) uc.move(dir);
+        else if (uc.canMove(dir.rotateLeft()) && ((directionOkay >> dir.rotateLeft().ordinal()) & 1) > 0) uc.move(dir.rotateLeft());
+        else if (uc.canMove(dir.rotateRight()) && ((directionOkay >> dir.rotateRight().ordinal()) & 1) > 0) uc.move(dir.rotateRight());
+        else if (uc.canMove(dir.rotateLeft().rotateLeft()) && ((directionOkay >> dir.rotateLeft().rotateLeft().ordinal()) & 1) > 0) uc.move(dir.rotateLeft().rotateLeft());
+        else if (uc.canMove(dir.rotateRight().rotateRight()) && ((directionOkay >> dir.rotateRight().rotateRight().ordinal()) & 1) > 0) uc.move(dir.rotateRight().rotateRight());
     }
 
     public static int packLoc(Location loc) {
