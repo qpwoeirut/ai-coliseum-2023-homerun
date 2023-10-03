@@ -7,6 +7,7 @@ abstract public class BasePlayer {
     protected final UnitController uc;
     protected final Communications comms;
     protected final BugMover bg;
+    protected final SpiralMover sp;
     protected final float VISION;
     protected final int URGENCY_FACTOR;
 
@@ -14,6 +15,7 @@ abstract public class BasePlayer {
         this.uc = uc;
         this.comms = new Communications(uc);
         this.bg = new BugMover(uc);
+        this.sp = new SpiralMover(uc);
 
         VISION = uc.getType().getStat(UnitStat.VISION_RANGE);
         if (uc.getType() == UnitType.BATTER) {

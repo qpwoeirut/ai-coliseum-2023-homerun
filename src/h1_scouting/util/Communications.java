@@ -325,6 +325,10 @@ public class Communications {
     // this way, we assume everything is blocked until we see otherwise
     // this must be called AFTER reportNewBases/Stadiums
     // ideally call this at the end of the turn
+    public Location getSelfHQLocation ()
+    {
+        return new Location(uc.read(ORIGIN_X + MAP_OFFSET), uc.read(ORIGIN_Y + MAP_OFFSET));
+    }
     public void reportNewGrassAtEndOfTurn(Location[] grass) {
 //        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);

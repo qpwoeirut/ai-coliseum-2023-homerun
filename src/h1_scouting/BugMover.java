@@ -147,21 +147,8 @@ public class BugMover {
         return wallFollow();
     }
 
-    Direction wallFollow() {
-        Location loc = uc.getLocation();
-        Direction dir = leftTurn ? prev_move.rotateRight().rotateRight() : prev_move.rotateLeft().rotateLeft();
-        // initial heading should be reversed since we're cutting back inside
-        for (int i = 7; i >= 0; --i) {
-            if (uc.canMove(dir)) {
-                if (visited[dir.ordinal()].get(Util.packLoc(loc.add(dir))) == 1) {
-                    return null;
-                } else {
-                    prev_move = dir;
-                    return dir;
-                }
-            }
-            dir = leftTurn ? dir.rotateLeft() : dir.rotateRight();
-        }
-        return null;
+    Direction wallFollow()
+    {
+        return Direction.NORTH;
     }
 }
