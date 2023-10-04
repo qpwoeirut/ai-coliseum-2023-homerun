@@ -22,6 +22,7 @@ public class PitcherPlayer extends BasePlayer {
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
 //            debug("directionOkay = " + directionOkay);
             if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
+//                debug("moving away from " + nearestEnemyBatter.getLocation());
                 Util.tryMoveInOkayDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()), directionOkay);
             }
 
