@@ -37,7 +37,7 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
-            debugBytecode("after attack");
+//            debugBytecode("after attack");
 
             if (uc.canMove()) {
                 if (patrolLoc != null) {
@@ -157,7 +157,7 @@ public class BatterPlayer extends BasePlayer {
     }
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
-        debugBytecode("pickTarget start");
+//        debugBytecode("pickTarget start");
 
         UnitInfo toAttack = null;
         int bestAttackScore = -1;
@@ -177,7 +177,7 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 
-        debugBytecode("pickTarget end. score = " + bestAttackScore);
+//        debugBytecode("pickTarget end. score = " + bestAttackScore);
         return toAttack;
     }
 

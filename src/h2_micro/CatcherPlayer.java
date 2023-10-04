@@ -22,7 +22,7 @@ public class CatcherPlayer extends BasePlayer {
 
             final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            debug("nearest enemy batter is " + nearestEnemyBatter);
+//            debug("nearest enemy batter is " + nearestEnemyBatter);
             if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }

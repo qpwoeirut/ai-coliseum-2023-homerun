@@ -59,13 +59,12 @@ abstract public class BasePlayer {
         if (uc.getRound() == currentRound) uc.yield();
     }
 
-    // turnsBeforeCanMove is the floor of the current cooldown (possibly after moving to loc)
     // ignores water
     protected boolean enemyBatterCanHitLocation(float movementCooldown, Location loc, UnitInfo[] enemies) {
         int turnsBeforeCanMove = (int)movementCooldown;
-        debug("turns: " + turnsBeforeCanMove + ", loc: " + loc);
+//        debug("turns: " + turnsBeforeCanMove + ", loc: " + loc);
         for (int i = enemies.length - 1; i >= 0; --i) {
-            debug(i + " " + enemies[i].getCurrentActionCooldown() + " " + enemies[i].getCurrentMovementCooldown() + " " + Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()));
+//            debug(i + " " + enemies[i].getCurrentActionCooldown() + " " + enemies[i].getCurrentMovementCooldown() + " " + Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()));
             if (enemies[i].getType() == UnitType.BATTER &&
                     turnsBeforeCanMove >= (int)(enemies[i].getCurrentActionCooldown() - 1) &&
                     Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + (int)(enemies[i].getCurrentMovementCooldown() - 1) <= turnsBeforeCanMove + 1.01f &&
