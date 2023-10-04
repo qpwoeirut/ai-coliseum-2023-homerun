@@ -16,12 +16,13 @@ public class PitcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
+            senseAndReportEnemies();
 
-            final UnitInfo[] enemies = senseAndReportEnemies();
-            final int directionOkay = calculateOkayDirections(enemies);
-            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
+            final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+            final int directionOkay = calculateOkayDirections(nearbyEnemies);
+            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
 //            debug("directionOkay = " + directionOkay);
-            if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
+            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
 //                debug("moving away from " + nearestEnemyBatter.getLocation());
                 Util.tryMoveInOkayDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()), directionOkay);
             }

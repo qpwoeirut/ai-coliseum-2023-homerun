@@ -24,7 +24,8 @@ public class BatterPlayer extends BasePlayer {
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
-            final int directionOkay = calculateOkayDirections(enemies);
+            UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+            final int directionOkay = calculateOkayDirections(nearbyEnemies);
 //            debug("Enemies: " + enemies.length);
             if (uc.canAct()) {
                 final UnitInfo toAttack = pickTargetToAttack(enemies);
@@ -167,9 +168,9 @@ public class BatterPlayer extends BasePlayer {
             final int val = directionToMoveToAttack(enemies[i]);
             if (val != -1) {
                 // score by attack effectiveness (how much net reputation we gain), tiebreak by closest enemy
-                // batters are implicitly targeted first because they are worth 60 rep, which is more than the others
+                // batters are implicitly targeted first because they are worth 75 rep, which is more than the others
 
-                // add 2 because we want to attack anything chebyshev within distance 2 no matter what
+                // add 8 because we want to attack anything within distance 8 no matter what
                 final int attackScore = 10 * (val / 9) - uc.getLocation().distanceSquared(enemies[i].getLocation()) + 8;
                 if (bestAttackScore < attackScore) {
                     bestAttackScore = attackScore;
@@ -182,7 +183,7 @@ public class BatterPlayer extends BasePlayer {
         return toAttack;
     }
 
-    boolean attack(UnitInfo target) {  // return value current unused but might be useful later, will leave for now
+    boolean attack(UnitInfo target) {  // return value currently unused but might be useful later, will leave for now
 //        uc.println("attack start " + uc.getEnergyUsed());
 
         final int val = directionToMoveToAttack(target);
