@@ -1,0 +1,9 @@
+AIC2023
+EmptyMap
+30 30
+418 384
+rotational
+0
+1
+14 14
+15 15
