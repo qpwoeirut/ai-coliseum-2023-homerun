@@ -20,7 +20,7 @@ public class SpiralMover {
             Location fin = spiral_center.add((int)(Math.round(radius * Math.cos(Math.toRadians(degrees)))), (int)(Math.round(radius * Math.sin(Math.toRadians(degrees)))));
             dir = uc.getLocation().directionTo(fin);
             uc.println(fin);
-            radius += 1.0 / moves;
+            radius += 0.5 / moves;
             degrees += 1;
         }
         if (uc.canMove(dir)) {
