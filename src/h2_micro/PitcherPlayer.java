@@ -35,9 +35,11 @@ public class PitcherPlayer extends BasePlayer {
                 }
                 if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
                     Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
-                    if (toMove == null) toMove = uc.getLocation().directionTo(claimedObjectLocation);
-                    if (toMove != Direction.ZERO) {
-                        Util.tryMoveInOkayDirection(uc, toMove, directionOkay);
+                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
+                        uc.move(toMove);
+                    } else {
+                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(claimedObjectLocation), directionOkay);
                     }
                 }
             } else {

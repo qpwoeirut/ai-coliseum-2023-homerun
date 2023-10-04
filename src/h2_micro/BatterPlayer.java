@@ -103,7 +103,8 @@ public class BatterPlayer extends BasePlayer {
                     if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
                         toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex], directionOkay);
                     }
-                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove)) {
+                    if (toMove == null) toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
                         uc.move(toMove);
                     } else {
                         Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]), directionOkay);
