@@ -26,7 +26,7 @@ public class CatcherPlayer extends BasePlayer {
 //                Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
 //            }
             if (uc.getInfo().getCurrentMovementCooldown() < 1) {
-                Direction dir = sp.spiralMove(comms.getSelfHQLocation());
+                Direction dir = sp.spiralMove(comms.getSelfHQLocation(), 0);
                 if (dir == Direction.ZERO)
                 {
                     dir = comms.directionViaFocalPoint(comms.getSelfHQLocation());
