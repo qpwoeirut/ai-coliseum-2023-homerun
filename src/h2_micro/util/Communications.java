@@ -16,33 +16,34 @@ public class Communications {
     private final int NO_CLAIM = 0;  // IDs are in [1, 10000]
     private final int CLAIM_EXPIRATION = 3;  // if a pitcher doesn't update their claim in 3 rounds, assume they've died
 
-    private final int MAX_OBJECT_COUNT = 4000; // > 60^2
+    private final int MAX_OBJECT_COUNT = 3650; // > 60^2
     private final int BASE_OFFSET = 0;
     private final int STADIUM_OFFSET = MAX_OBJECT_COUNT * OBJECT_SIZE;
 
-    private final int CHECK_IN_OFFSET = 50000;
+    private final int CHECK_IN_OFFSET = 30000;
     private final int BATTER_NUMBER = 0;
     private final int CATCHER_NUMBER = 1;
     private final int PITCHER_NUMBER = 2;
     private final int HQ_NUMBER = 3;
 
-    private final int ENEMY_SIGHTING_OFFSET = 60000;
+    private final int ENEMY_SIGHTING_OFFSET = 40000;
     private final int ENEMY_SIZE = 3;
     private final int ENEMY_X = 1;
     private final int ENEMY_Y = 2;
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = (int)(UnitType.BATTER.getStat(UnitStat.VISION_RANGE));
 
-    private final int DISTANCE_QUEUE_OFFSET = 100000;
+    private final int DISTANCE_QUEUE_OFFSET = 50000;
     private final int DISTANCE_QUEUE_SIZE = 100000 - 3;
     private final int DISTANCE_QUEUE_START = DISTANCE_QUEUE_SIZE;
     private final int DISTANCE_QUEUE_END = DISTANCE_QUEUE_SIZE + 1;
 
-    private final int MAP_OFFSET = 200000;
-    private final int MAP_DIMENSION = 123;
+    private final int MAP_OFFSET = 150000;
+    private final int MAP_DIMENSION = 121;
     // assume our HQ is at (60, 60). This guess is off by at most 60 in either direction, se we need 120 to store the map
-    private final int MAP_SIZE = 125 * 125;
+    private final int MAP_SIZE = 122 * 122;
     private final int ORIGIN_X = MAP_SIZE - 4, ORIGIN_Y = MAP_SIZE - 3;  // take advantage of extra buffer space
+    private final int MAX_MAP_COUNT = ((1_000_000 - MAP_OFFSET) / MAP_SIZE) - 1;
 
     // passability map states. states can only increase
     // all locations start off as impassable
@@ -70,7 +71,7 @@ public class Communications {
         if (uc.getType() == UnitType.HQ) {
             uc.write(MAP_OFFSET + ORIGIN_X, uc.getLocation().x);
             uc.write(MAP_OFFSET + ORIGIN_Y, uc.getLocation().y);
-            createDistanceMapIfNotExists(uc.getLocation());
+            createDistanceMapIfNotExists(uc.getLocation(), 0);
         }
     }
 
@@ -97,7 +98,7 @@ public class Communications {
                 uc.write(offset + OBJECT_SIZE * (n + m) + CLAIM_ROUND, NO_CLAIM);
                 ++m;
 
-                createDistanceMapIfNotExists(locs[locIdx]);
+                createDistanceMapIfNotExists(locs[locIdx], 1);
             }
         }
         uc.write(offset, n + m);
@@ -334,7 +335,7 @@ public class Communications {
                 writeMapLocation(0, x, y, PASSABLE);
                 if (x % 10 == 0 && y % 10 == 0) {
                     // don't need to update mapCount for the new maps since they haven't started processing yet
-                    createDistanceMapIfNotExists(grass[i]);
+                    createDistanceMapIfNotExists(grass[i], 9);
                 }
 
                 for (int m = mapCount; m > 0; --m) {
@@ -481,11 +482,15 @@ public class Communications {
         }
         return bestIdx;
     }
-    private void createDistanceMapIfNotExists(Location externalLoc) {
+    private void createDistanceMapIfNotExists(Location externalLoc, int buffer) {
         final int internalX = convertToInternalX(externalLoc.x), internalY = convertToInternalY(externalLoc.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        if (n >= MAX_MAP_COUNT) return;
         for (int i = n; i > 0; --i) {
-            if (uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_X) == internalX && uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_Y) == internalY) return;
+            if (Math.abs(uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_X) - internalX) <= buffer &&
+                    Math.abs(uc.read(MAP_OFFSET + MAP_SIZE * i + ORIGIN_Y) - internalY) <= buffer) {
+                return;
+            }
         }
 
         uc.write(MAP_OFFSET + DISTANCE_MAP_COUNT, n + 1);
