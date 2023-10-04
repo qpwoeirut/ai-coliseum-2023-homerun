@@ -613,10 +613,10 @@ public class Communications {
     }
 
     public boolean lowerBoundDistanceGreaterThan(Location loc1, Location loc2, int threshold) {
+        if ((int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT) > threshold) return true;
         final int curX = convertToInternalX(loc1.x), curY = convertToInternalY(loc1.y);
         final int internalX = convertToInternalX(loc2.x), internalY = convertToInternalY(loc2.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
-        if ((int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT) > threshold) return true;
         for (int i = n; i > 0; --i) {
             if (Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)) > threshold) return true;
         }
