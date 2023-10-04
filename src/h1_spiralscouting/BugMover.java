@@ -1,10 +1,10 @@
-package h1_scouting;
+package h1_spiralscouting;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
-import h1_scouting.util.IntHashMap;
-import h1_scouting.util.Util;
+import h1_spiralscouting.util.IntHashMap;
+import h1_spiralscouting.util.Util;
 
 public class BugMover {
 

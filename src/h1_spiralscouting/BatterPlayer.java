@@ -1,7 +1,7 @@
-package h1_scouting;
+package h1_spiralscouting;
 
 import aic2023.user.*;
-import h1_scouting.util.Util;
+import h1_spiralscouting.util.Util;
 
 import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {

@@ -1,4 +1,4 @@
-package h1_scouting;
+package h1_spiralscouting;
 
 import aic2023.user.*;
 

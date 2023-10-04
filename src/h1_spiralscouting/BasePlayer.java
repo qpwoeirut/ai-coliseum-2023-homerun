@@ -1,7 +1,7 @@
-package h1_scouting;
+package h1_spiralscouting;
 
 import aic2023.user.*;
-import h1_scouting.util.Communications;
+import h1_spiralscouting.util.Communications;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

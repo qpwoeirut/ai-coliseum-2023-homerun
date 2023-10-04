@@ -1,4 +1,4 @@
-package h1_scouting.util;
+package h1_spiralscouting.util;
 
 import java.util.Arrays;
 
