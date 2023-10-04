@@ -95,7 +95,7 @@ public class Util {
 
     public static float movementDistance(Location a, Location b) {
         int max = Util.chebyshevDistance(a, b);
-        return max + (max - Math.min(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y)) * 1.14142f;
+        return max + (max - Math.min(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y)) * 1.4142f;
     }
 
     public static float movementAdjacentDistance(Location a, Location b) {

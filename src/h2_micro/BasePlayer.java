@@ -78,7 +78,7 @@ abstract public class BasePlayer {
 
     protected boolean enemyBatterCanHitNewLocation(Direction dir, UnitInfo[] enemies) {
         return enemyBatterCanHitLocation(
-                uc.getInfo().getCurrentMovementCooldown() + uc.getType().getStat(UnitStat.MOVEMENT_COOLDOWN) * (dir.ordinal() % 2 == 1 ? 1.14142f : 1f),
+                uc.getInfo().getCurrentMovementCooldown() + uc.getType().getStat(UnitStat.MOVEMENT_COOLDOWN) * (dir.ordinal() % 2 == 1 ? 1.4142f : 1f),
                 uc.getLocation().add(dir),
                 enemies
         );
