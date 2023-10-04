@@ -95,13 +95,13 @@ public class Util {
 
     public static float movementDistance(Location a, Location b) {
         int max = Util.chebyshevDistance(a, b);
-        return max + (max - Math.min(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y)) * 1.14142f;
+        return max + (max - Math.min(a.x >= b.x ? a.x - b.x : b.x - a.x, a.y >= b.y ? a.y - b.y : b.y - a.y)) * 1.4142f;
     }
 
-    public static float movementAdjacentDistance(Location a, Location b) {
-        final int dx = Math.max(0, Math.abs(a.x - b.x) - 1);
-        final int dy = Math.max(0, Math.abs(a.y - b.y) - 1);
-        return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.14142f;
+    public static float movementNearDistance(Location a, Location b) {
+        final int dx = Math.max(0, Math.abs(a.x - b.x) - 2);
+        final int dy = Math.max(0, Math.abs(a.y - b.y) - 2);
+        return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.4142f;
     }
 
     public static int getMaxIndex(int[] values, int n) {

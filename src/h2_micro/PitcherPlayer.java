@@ -16,12 +16,14 @@ public class PitcherPlayer extends BasePlayer {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
+            senseAndReportEnemies();
 
-            final UnitInfo[] enemies = senseAndReportEnemies();
-            final int directionOkay = calculateOkayDirections(enemies);
-            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            debug("directionOkay = " + directionOkay);
-            if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
+            final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+            final int directionOkay = calculateOkayDirections(nearbyEnemies);
+            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
+//            debug("directionOkay = " + directionOkay);
+            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
+//                debug("moving away from " + nearestEnemyBatter.getLocation());
                 Util.tryMoveInOkayDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()), directionOkay);
             }
 
@@ -35,9 +37,11 @@ public class PitcherPlayer extends BasePlayer {
                 }
                 if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
                     Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
-                    if (toMove == null) toMove = uc.getLocation().directionTo(claimedObjectLocation);
-                    if (toMove != Direction.ZERO) {
-                        Util.tryMoveInOkayDirection(uc, toMove, directionOkay);
+                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
+                        uc.move(toMove);
+                    } else {
+                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(claimedObjectLocation), directionOkay);
                     }
                 }
             } else {

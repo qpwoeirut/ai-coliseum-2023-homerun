@@ -11,6 +11,9 @@ abstract public class BasePlayer {
     protected final float VISION;
     protected final int URGENCY_FACTOR;
 
+    // farthest away (in squared distance) that an enemy batter can be while posing a threat
+    protected final int REACHABLE_VISION = 15;
+
     BasePlayer(UnitController uc) {
         this.uc = uc;
         this.comms = new Communications(uc);
@@ -59,19 +62,20 @@ abstract public class BasePlayer {
         if (uc.getRound() == currentRound) uc.yield();
     }
 
-    // turnsBeforeCanMove is the floor of the current cooldown (possibly after moving to loc)
-    // ignores water
+    // calculates if an enemy can hit our player at loc before it can move away
+    //
     protected boolean enemyBatterCanHitLocation(float movementCooldown, Location loc, UnitInfo[] enemies) {
-        int turnsBeforeCanMove = (int)movementCooldown;
-        debug("turns: " + turnsBeforeCanMove + ", loc: " + loc);
+        final int turnsBeforeCanMove = (int)movementCooldown;
+//        debug("cooldown: " + movementCooldown + ", loc: " + loc);
         for (int i = enemies.length - 1; i >= 0; --i) {
-            debug(i + " " + enemies[i].getCurrentActionCooldown() + " " + enemies[i].getCurrentMovementCooldown() + " " + Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()));
-            if (enemies[i].getType() == UnitType.BATTER &&
-                    turnsBeforeCanMove >= (int)(enemies[i].getCurrentActionCooldown() - 1) &&
-                    Util.movementAdjacentDistance(loc, enemies[i].getLocation()) + (int)(enemies[i].getCurrentMovementCooldown() - 1) <= turnsBeforeCanMove + 1.01f &&
-                    comms.lowerBoundDistance(loc, enemies[i].getLocation()) <= (2 + turnsBeforeCanMove) * comms.DISTANCE_ROOT
-            ) {
-                return true;
+            if (enemies[i].getType() == UnitType.BATTER && turnsBeforeCanMove >= (int)(enemies[i].getCurrentActionCooldown() - 1) && loc.distanceSquared(enemies[i].getLocation()) <= (2 + turnsBeforeCanMove) * (2 + turnsBeforeCanMove) * 2) {
+                final float cooldownToBeNear = Util.movementNearDistance(loc, enemies[i].getLocation()) * 1.5f;
+//                debug(i + " " + enemies[i].getCurrentMovementCooldown() + " " + cooldownToBeNear + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()) + " " + (int)(cooldownToBeNear + enemies[i].getCurrentMovementCooldown() - 0.999));
+                if ((cooldownToBeNear > 0 && enemies[i].getCurrentMovementCooldown() >= 1 ? 1 : 0) + (int)(cooldownToBeNear + enemies[i].getCurrentMovementCooldown() - 0.999) <= turnsBeforeCanMove &&
+                        !comms.lowerBoundDistanceGreaterThan(loc, enemies[i].getLocation(), (2 + turnsBeforeCanMove) * comms.DISTANCE_ROOT)) {
+//                    debug("batter too close!");
+                    return true;
+                }
             }
         }
         return false;
@@ -79,7 +83,7 @@ abstract public class BasePlayer {
 
     protected boolean enemyBatterCanHitNewLocation(Direction dir, UnitInfo[] enemies) {
         return enemyBatterCanHitLocation(
-                uc.getInfo().getCurrentMovementCooldown() + uc.getType().getStat(UnitStat.MOVEMENT_COOLDOWN) * (dir.ordinal() % 2 == 1 ? 1.14142f : 1f),
+                uc.getInfo().getCurrentMovementCooldown() + uc.getType().getStat(UnitStat.MOVEMENT_COOLDOWN) * (dir.ordinal() % 2 == 1 ? 1.4142f : 1f),
                 uc.getLocation().add(dir),
                 enemies
         );
@@ -99,7 +103,7 @@ abstract public class BasePlayer {
     }
 
     protected void debug(String message) {
-        if (uc.getRound() <= 100) uc.println(message);
+        if (800 <= uc.getRound() && uc.getRound() <= 1000) uc.println(message);
     }
 
     protected void debugBytecode(String message) {

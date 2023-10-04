@@ -21,9 +21,11 @@ public class CatcherPlayer extends BasePlayer {
             senseAndReportStadiums();
 
             final UnitInfo[] enemies = senseAndReportEnemies();
-            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), enemies, UnitType.BATTER);
-            debug("nearest enemy batter is " + nearestEnemyBatter);
-            if (nearestEnemyBatter != null && enemyBatterCanHitLocation(uc.getInfo().getCurrentMovementCooldown(), uc.getLocation(), enemies)) {
+            final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+            final int directionOkay = calculateOkayDirections(nearbyEnemies);
+            final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
+//            debug("nearest enemy batter is " + nearestEnemyBatter);
+            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
 
@@ -35,9 +37,9 @@ public class CatcherPlayer extends BasePlayer {
             }
             final Direction dir = bg.move(spawn.add(scoutDir.dx * 55, scoutDir.dy * 55));
             if (dir != null && dir != Direction.ZERO) {
-                Util.tryMoveInOkayDirection(uc, dir, calculateOkayDirections(enemies));
+                Util.tryMoveInOkayDirection(uc, dir, directionOkay);
             } else {
-                Util.tryMoveInOkayDirection(uc, scoutDir, calculateOkayDirections(enemies));
+                Util.tryMoveInOkayDirection(uc, scoutDir, directionOkay);
             }
 
             endTurn();
