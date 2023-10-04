@@ -101,7 +101,7 @@ public class Util {
     public static float movementAdjacentDistance(Location a, Location b) {
         final int dx = Math.max(0, Math.abs(a.x - b.x) - 1);
         final int dy = Math.max(0, Math.abs(a.y - b.y) - 1);
-        return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.14142f;
+        return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.4142f;
     }
 
     public static int getMaxIndex(int[] values, int n) {
