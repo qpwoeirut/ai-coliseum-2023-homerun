@@ -678,8 +678,17 @@ public class Communications {
             }
 
             Location loc = new Location(convertToExternalX(internalX), convertToExternalY(internalY));
-            if (bestDist > uc.getLocation().distanceSquared(loc)) {
-                bestDist = uc.getLocation().distanceSquared(loc);
+            final int dist = uc.getLocation().distanceSquared(loc);
+            if (dist <= 9) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                continue;
+            }
+
+            if (bestDist > dist) {
+                bestDist = dist;
                 bestIdx = i;
                 bestLoc = loc;
             }
