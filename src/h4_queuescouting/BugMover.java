@@ -11,7 +11,7 @@ public class BugMover {
     private final UnitController uc;
     private final int INF = 10000;
     private int stage = 0;
-    private Location target = null;
+    public Location target = null;
     private Direction prev_move = Direction.SOUTH;
     private int minDist;
 
