@@ -616,7 +616,9 @@ public class Communications {
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int lbDist = (int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT);
         for (int i = n; i > 0; --i) {
-            lbDist = Math.max(lbDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
+            if (infIfZero(readMapLocation(i, curX, curY)) != INF && infIfZero(readMapLocation(i, internalX, internalY)) != INF) {
+                lbDist = Math.max(lbDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
+            }
         }
         return lbDist;
     }
@@ -630,7 +632,10 @@ public class Communications {
         final int internalX = convertToInternalX(loc2.x), internalY = convertToInternalY(loc2.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         for (int i = n; i > 0; --i) {
-            if (Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)) > threshold) return true;
+            if (infIfZero(readMapLocation(i, curX, curY)) != INF && infIfZero(readMapLocation(i, internalX, internalY)) != INF &&
+                    Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)) > threshold) {
+                return true;
+            }
         }
         return false;
     }
