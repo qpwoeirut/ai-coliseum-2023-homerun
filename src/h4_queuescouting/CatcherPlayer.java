@@ -9,18 +9,14 @@ public class CatcherPlayer extends BasePlayer {
     }
 
     void run() {
-        int SCOUT_TIMER = 150;
-
-        Location spawn = uc.getLocation();
-
-        Direction scoutDir = Direction.values()[uc.getInfo().getID() % 8];
+        final int SCOUT_TIMER = 100;
         int scoutTimer = SCOUT_TIMER;
+        Location target = null;
         while (true) {
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
 
-            final UnitInfo[] enemies = senseAndReportEnemies();
             final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
             final int directionOkay = calculateOkayDirections(nearbyEnemies);
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
@@ -29,17 +25,29 @@ public class CatcherPlayer extends BasePlayer {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
 
-            if (uc.isOutOfMap(uc.getLocation().add(scoutDir.dx * 3, scoutDir.dy * 3)) || --scoutTimer == 0) {
-                int shift = (int)(uc.getRandomDouble() * 6) + 1;
-                if (shift >= 4) ++shift;
-                scoutDir = Direction.values()[(scoutDir.ordinal() + shift) % 8];
-                scoutTimer = SCOUT_TIMER;
-            }
-            final Direction dir = bg.move(spawn.add(scoutDir.dx * 55, scoutDir.dy * 55));
-            if (dir != null && dir != Direction.ZERO) {
-                Util.tryMoveInOkayDirection(uc, dir, directionOkay);
-            } else {
-                Util.tryMoveInOkayDirection(uc, scoutDir, directionOkay);
+            if (uc.canMove()) {
+                if (target == null) {
+                    target = comms.popNearestScoutingQueue();
+                }
+                while (target != null && uc.getLocation().distanceSquared(target) <= VISION) {
+                    target = comms.popNearestScoutingQueue();
+                    // update map boundaries?
+                }
+                if (target != null) {
+                    Direction dir = bg.move(target);
+                    if (dir != null && dir != Direction.ZERO && uc.canMove(dir) && ((directionOkay >> dir.ordinal()) & 1) > 0) {
+                        uc.move(dir);
+                    } else {
+                        Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
+                    }
+                } else {
+                    Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
+                }
+
+                if (--scoutTimer <= 0) {
+                    scoutTimer = SCOUT_TIMER;
+                    target = null;
+                }
             }
 
             endTurn();

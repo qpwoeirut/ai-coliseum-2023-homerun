@@ -33,8 +33,13 @@ public class Communications {
     private final int ENEMY_URGENCY = 3;
     private final int ENEMY_MERGE_DISTANCE = (int)(UnitType.BATTER.getStat(UnitStat.VISION_RANGE));
 
-    private final int DISTANCE_QUEUE_OFFSET = 50000;
-    private final int DISTANCE_QUEUE_SIZE = 100000 - 3;
+    private final int SCOUTING_QUEUE_OFFSET = 50000;
+    private final int SCOUTING_QUEUE_SIZE = 5000 - 3;
+    private final int SCOUTING_QUEUE_START = SCOUTING_QUEUE_SIZE;
+    private final int SCOUTING_QUEUE_END = SCOUTING_QUEUE_SIZE + 1;
+
+    private final int DISTANCE_QUEUE_OFFSET = 55000;
+    private final int DISTANCE_QUEUE_SIZE = 95000 - 3;
     private final int DISTANCE_QUEUE_START = DISTANCE_QUEUE_SIZE;
     private final int DISTANCE_QUEUE_END = DISTANCE_QUEUE_SIZE + 1;
 
@@ -365,7 +370,7 @@ public class Communications {
                         );
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
-                            addToQueue(packMapIndexAndLocation(m, x, y));
+                            addToDistanceQueue(packMapIndexAndLocation(m, x, y));
                         }
                     }
                 }
@@ -386,9 +391,9 @@ public class Communications {
         if (uc.getType() == UnitType.CATCHER) {
             final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
             return (readMapLocation(0, x - 1, y) == UNINITIALIZED || readMapLocation(0, x - 1, y) == SENSED) &&
-                   (readMapLocation(0, x, y - 1) == UNINITIALIZED || readMapLocation(0, x, y - 1) == SENSED) &&
-                   (readMapLocation(0, x, y + 1) == UNINITIALIZED || readMapLocation(0, x, y + 1) == SENSED) &&
-                   (readMapLocation(0, x + 1, y) == UNINITIALIZED || readMapLocation(0, x + 1, y) == SENSED);  // don't need to sense middle location, others cover it
+                    (readMapLocation(0, x, y - 1) == UNINITIALIZED || readMapLocation(0, x, y - 1) == SENSED) &&
+                    (readMapLocation(0, x, y + 1) == UNINITIALIZED || readMapLocation(0, x, y + 1) == SENSED) &&
+                    (readMapLocation(0, x + 1, y) == UNINITIALIZED || readMapLocation(0, x + 1, y) == SENSED);  // don't need to sense middle location, others cover it
         } else {
             return readMapLocation(0, convertToInternalX(uc.getLocation().x), convertToInternalY(uc.getLocation().y)) == SENSED;
         }
@@ -409,6 +414,12 @@ public class Communications {
     }
     private int convertToInternalY(int originalY) {
         return originalY - uc.read(MAP_OFFSET + ORIGIN_Y) + 60;
+    }
+    private int convertToExternalX(int originalX) {
+        return originalX + uc.read(MAP_OFFSET + ORIGIN_X) - 60;
+    }
+    private int convertToExternalY(int originalY) {
+        return originalY + uc.read(MAP_OFFSET + ORIGIN_Y) - 60;
     }
 
     // ------------------------------------------ DISTANCE QUEUE ------------------------------------------
@@ -445,9 +456,10 @@ public class Communications {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
-                addToQueue(packMapIndexAndLocation(mapIdx, newX, newY));
+                addToDistanceQueue(packMapIndexAndLocation(mapIdx, newX, newY));
             }
         } else {
+            if (mapIdx == 1 && readMapLocation(mapIdx, newX, newY) == UNINITIALIZED) addToScoutingQueue(newX, newY);
             writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
         }
     }
@@ -459,7 +471,7 @@ public class Communications {
     // adds to queue, trying to ensure that queue doesn't get messed up on bytecode overflows
     // some benchmarking suggests that one invocation of this method costs 30 bytecode + any wasted on the first line
     // removing the first line would save 5 bytecode for a normal invocation
-    public void addToQueue(int value) {
+    public void addToDistanceQueue(int value) {
         while (uc.getEnergyLeft() <= 31);  // wait until we run out of bytecode and next turn starts
         final int queueEnd = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END);
         uc.write(DISTANCE_QUEUE_OFFSET + queueEnd, value);
@@ -498,7 +510,7 @@ public class Communications {
         uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_Y, internalY);
 
         writeMapLocation(n + 1, internalX, internalY, INITIAL_DISTANCE);
-        addToQueue(packMapIndexAndLocation(n + 1, internalX, internalY));
+        addToDistanceQueue(packMapIndexAndLocation(n + 1, internalX, internalY));
     }
 
     /**
@@ -625,5 +637,50 @@ public class Communications {
 
     private int infIfZero(int x) {
         return x == 0 ? INF : x;
+    }
+
+    // ------------------------------------------ SCOUTING QUEUE ------------------------------------------
+
+    private void addToScoutingQueue(int x, int y) {
+        while (uc.getEnergyLeft() <= 41);  // wait until we run out of bytecode and next turn starts
+        final int queueEnd = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END);
+        uc.write(SCOUTING_QUEUE_OFFSET + queueEnd, x * MAP_DIMENSION + y);
+        uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END, (queueEnd + 1) % SCOUTING_QUEUE_SIZE);
+    }
+    public Location popNearestScoutingQueue() {
+        int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
+        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 20);
+        int bestDist = INF;
+        int bestIdx = -1;
+        Location bestLoc = null;
+        for (int i = queueStart; i < queueEnd; ++i) {
+            final int val = uc.read(SCOUTING_QUEUE_OFFSET + i);
+            if (val == -1) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                continue;
+            }
+
+            final int internalX = val / MAP_DIMENSION, internalY = val % MAP_DIMENSION;
+            if (readMapLocation(1, internalX, internalY) != INF) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                continue;
+            }
+
+            Location loc = new Location(convertToExternalX(internalX), convertToExternalY(internalY));
+            if (bestDist > uc.getLocation().distanceSquared(loc)) {
+                bestDist = uc.getLocation().distanceSquared(loc);
+                bestIdx = i;
+                bestLoc = loc;
+            }
+        }
+
+        if (bestIdx != -1) uc.write(SCOUTING_QUEUE_OFFSET + bestIdx, -1);
+        return bestLoc;
     }
 }
