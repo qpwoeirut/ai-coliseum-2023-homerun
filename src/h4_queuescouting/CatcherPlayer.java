@@ -11,6 +11,7 @@ public class CatcherPlayer extends BasePlayer {
     void run() {
         int scoutTimer = 30;
         Location target = null;
+        boolean reachedFocalPoint = false;
         while (true) {
             comms.checkIn();
             senseAndReportBases();
@@ -25,19 +26,31 @@ public class CatcherPlayer extends BasePlayer {
             }
 
             if (uc.canMove()) {
+//                debugBytecode("start move");
                 if (target == null) {
                     target = comms.popNearestScoutingQueue();
+                    reachedFocalPoint = false;
                     if (target != null) scoutTimer = (int)(Util.movementDistance(uc.getLocation(), target) * 2);
                 }
-                while (target != null && (uc.getLocation().distanceSquared(target) <= 9 || (uc.getLocation().distanceSquared(target) <= VISION && uc.isOutOfMap(target)))) {
+                while (target != null &&
+                        (uc.getLocation().distanceSquared(target) <= 9 ||
+                                (uc.getLocation().distanceSquared(target) <= VISION &&
+                                        (uc.isOutOfMap(target) || uc.senseObjectAtLocation(target, false) == MapObject.WATER)))) {
+//                    debugBytecode("scrapping target " + target);
                     target = comms.popNearestScoutingQueue();
+                    reachedFocalPoint = false;
                     if (target != null) scoutTimer = (int)(Util.movementDistance(uc.getLocation(), target) * 2);
                     // update map boundaries?
                 }
-//                debug("target = " + target + ", scoutTimer = " + scoutTimer);
                 if (target != null) {
+//                    debug("target = " + target + ", scoutTimer = " + scoutTimer + ", lb dist = " + comms.lowerBoundDistance(uc.getLocation(), target));
+
                     Direction dir = null;
-                    if (comms.lowerBoundDistanceGreaterThan(uc.getLocation(), target, 20)) dir = comms.directionViaFocalPoint(target, directionOkay);
+                    if (!reachedFocalPoint && comms.lowerBoundDistanceGreaterThan(uc.getLocation(), target, 6 * comms.DISTANCE_ROOT)) dir = comms.directionViaFocalPoint(target, directionOkay);
+                    if (dir == Direction.ZERO) {
+                        dir = null;
+                        reachedFocalPoint = true;
+                    }
                     if (dir == null) {
                         if (bg.target != target) bg.init(target);
                         dir = bg.bug0(target);  // don't bother with bug1. if bug0 fails, just change targets
@@ -50,6 +63,7 @@ public class CatcherPlayer extends BasePlayer {
                         Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
                     }
                 } else {
+//                    debug("target = null");
                     Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
                 }
 
