@@ -9,8 +9,7 @@ public class CatcherPlayer extends BasePlayer {
     }
 
     void run() {
-        final int SCOUT_TIMER = 100;
-        int scoutTimer = SCOUT_TIMER;
+        int scoutTimer = 30;
         Location target = null;
         while (true) {
             comms.checkIn();
@@ -28,13 +27,23 @@ public class CatcherPlayer extends BasePlayer {
             if (uc.canMove()) {
                 if (target == null) {
                     target = comms.popNearestScoutingQueue();
+                    if (target != null) scoutTimer = (int)(Util.movementDistance(uc.getLocation(), target) * 2);
                 }
-                while (target != null && uc.getLocation().distanceSquared(target) <= VISION) {
+                while (target != null && (uc.getLocation().distanceSquared(target) <= 9 || (uc.getLocation().distanceSquared(target) <= VISION && uc.isOutOfMap(target)))) {
                     target = comms.popNearestScoutingQueue();
+                    if (target != null) scoutTimer = (int)(Util.movementDistance(uc.getLocation(), target) * 2);
                     // update map boundaries?
                 }
+//                debug("target = " + target + ", scoutTimer = " + scoutTimer);
                 if (target != null) {
-                    Direction dir = bg.move(target);
+                    Direction dir = null;
+                    if (comms.lowerBoundDistanceGreaterThan(uc.getLocation(), target, 20)) dir = comms.directionViaFocalPoint(target, directionOkay);
+                    if (dir == null) {
+                        if (bg.target != target) bg.init(target);
+                        dir = bg.bug0(target);  // don't bother with bug1. if bug0 fails, just change targets
+                    }
+                    if (dir == null) target = null;
+
                     if (dir != null && dir != Direction.ZERO && uc.canMove(dir) && ((directionOkay >> dir.ordinal()) & 1) > 0) {
                         uc.move(dir);
                     } else {
@@ -45,7 +54,6 @@ public class CatcherPlayer extends BasePlayer {
                 }
 
                 if (--scoutTimer <= 0) {
-                    scoutTimer = SCOUT_TIMER;
                     target = null;
                 }
             }
