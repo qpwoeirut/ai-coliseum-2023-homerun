@@ -441,26 +441,38 @@ public class Communications {
             if (cur == 0) uc.println("This is bad! cur = 0, queueStart = " + queueStart);
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
-            checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
-            checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
-            checkLocation(mapIdx, x, y + 1, dist, DISTANCE_UNIT);
-            checkLocation(mapIdx, x + 1, y, dist, DISTANCE_UNIT);
-            checkLocation(mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT);
-            checkLocation(mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT);
-            checkLocation(mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT);
-            checkLocation(mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT);
+
+            boolean shouldAddToScoutingQueue = checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x, y + 1, dist, DISTANCE_UNIT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y, dist, DISTANCE_UNIT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT);
+            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT);
+            if (shouldAddToScoutingQueue) addToScoutingQueue(x, y);
         }
     }
 
-    private void checkLocation(int mapIdx, int newX, int newY, int dist, int distChange) {
+    /**
+     * @param mapIdx     current map
+     * @param newX       x value of coordinate to check
+     * @param newY       y value of coordinate to check
+     * @param dist       current distance
+     * @param distChange amount that dist will be incremented for newX and newY
+     * @return whether to add the original location to the scouting queue
+     */
+    private boolean checkLocation(int mapIdx, int newX, int newY, int dist, int distChange) {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
                 addToDistanceQueue(packMapIndexAndLocation(mapIdx, newX, newY));
             }
+            return false;
         } else {
-            if (mapIdx == 1 && readMapLocation(mapIdx, newX, newY) == UNINITIALIZED) addToScoutingQueue(newX, newY);
+            boolean ret = mapIdx == 1 && readMapLocation(mapIdx, newX, newY) == UNINITIALIZED;
             writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
+            return ret;
         }
     }
 
@@ -668,25 +680,34 @@ public class Communications {
                 continue;
             }
 
-            final int internalX = val / MAP_DIMENSION, internalY = val % MAP_DIMENSION;
-            if (readMapLocation(1, internalX, internalY) != INF) {
+            final int x = val / MAP_DIMENSION, y = val % MAP_DIMENSION;
+            if (readMapLocation(0, x - 1, y - 1) == SENSED ||
+                    readMapLocation(0, x - 1, y) == SENSED ||
+                    readMapLocation(0, x - 1, y + 1) == SENSED ||
+                    readMapLocation(0, x, y - 1) == SENSED ||
+                    readMapLocation(0, x, y) == SENSED ||
+                    readMapLocation(0, x, y + 1) == SENSED ||
+                    readMapLocation(0, x + 1, y - 1) == SENSED ||
+                    readMapLocation(0, x + 1, y) == SENSED ||
+                    readMapLocation(0, x + 1, y + 1) == SENSED) {
                 if (queueStart == i) {
                     ++queueStart;
                     uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
                 }
+                uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
                 continue;
             }
 
-            Location loc = new Location(convertToExternalX(internalX), convertToExternalY(internalY));
+            Location loc = new Location(convertToExternalX(x), convertToExternalY(y));
             final int dist = uc.getLocation().distanceSquared(loc);
-            if (dist <= 9) {
+            if (dist <= 9 || (dist <= uc.getType().getStat(UnitStat.VISION_RANGE) && (uc.isOutOfMap(loc) || uc.senseObjectAtLocation(loc, false) == MapObject.WATER))) {
                 if (queueStart == i) {
                     ++queueStart;
                     uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
                 }
+                uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
                 continue;
             }
-
             if (bestDist > dist) {
                 bestDist = dist;
                 bestIdx = i;

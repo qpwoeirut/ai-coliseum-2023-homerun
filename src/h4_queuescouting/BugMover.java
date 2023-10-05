@@ -15,17 +15,18 @@ public class BugMover {
     private Direction prev_move = Direction.SOUTH;
     private int minDist;
 
-    private final boolean leftTurn;  // decide randomly whether this bug will turn left or right
+    private boolean followingWall = false;
+
+    private final boolean clockwise;  // decide randomly whether this bug will turn left or right
     private final IntHashMap[] visited = new IntHashMap[Direction.values().length];
     private final int BUCKET_COUNT = 8;
-
     private final int STUCK_THRESHOLD = 5;  // after this many failed moves, restart the algorithm
     private int stuckCount = 0;
     private int attempts = 0;
 
     BugMover(UnitController uc) {
         this.uc = uc;
-        this.leftTurn = uc.getInfo().getID() % 2 == 0;
+        this.clockwise = uc.getInfo().getID() % 2 == 0;
     }
 
     void init(Location fin) {
@@ -41,8 +42,10 @@ public class BugMover {
         for (int i = Direction.values().length - 1; i >= 0; --i) {
             visited[i] = new IntHashMap(BUCKET_COUNT);
         }
+
+        followingWall = false;
     }
-    void useDirection(Direction dir) {
+    private void useDirection(Direction dir) {
         prev_move = dir;
         stuckCount = 0;
         attempts = 0;
@@ -56,7 +59,7 @@ public class BugMover {
      * @param fin Location to move to
      * @return direction to move in
      */
-    Direction move(Location fin) {
+    public Direction move(Location fin) {
         // TODO: add an @param nullIfUnreachable whether to return null or Direction.ZERO if the location is unreachable
 
         if (!uc.canMove()) return Direction.ZERO;
@@ -133,10 +136,29 @@ public class BugMover {
         return Direction.ZERO;
     }
 
-    Direction bug0(Location fin) {
+    public Direction moveUsingBug0(Location fin) {
+        if (!uc.canMove()) return Direction.ZERO;
+        if (!uc.canMove(Direction.NORTH) && !uc.canMove(Direction.NORTHEAST) &&
+                !uc.canMove(Direction.EAST) && !uc.canMove(Direction.SOUTHEAST) &&
+                !uc.canMove(Direction.SOUTH) && !uc.canMove(Direction.SOUTHWEST) &&
+                !uc.canMove(Direction.WEST) && !uc.canMove(Direction.NORTHWEST)) {
+            return Direction.ZERO;
+        }
+
         Location loc = uc.getLocation();
+        if (!fin.isEqual(target)) {
+//            uc.println("new target received");
+            init(fin);
+        }
+        visited[prev_move.ordinal()].put(Util.packLoc(loc), 1);
+        return bug0(fin);
+    }
+
+    private Direction bug0(Location fin) {
+        final Location loc = uc.getLocation();
         if (uc.canMove(loc.directionTo(fin))) {
             prev_move = loc.directionTo(fin);
+            followingWall = false;
 
             if (visited[prev_move.ordinal()].get(Util.packLoc(loc.add(prev_move))) == 1) {
                 return null;
@@ -147,9 +169,10 @@ public class BugMover {
         return wallFollow();
     }
 
-    Direction wallFollow() {
-        Location loc = uc.getLocation();
-        Direction dir = leftTurn ? prev_move.rotateRight().rotateRight() : prev_move.rotateLeft().rotateLeft();
+    private Direction wallFollow() {
+        final Location loc = uc.getLocation();
+        Direction dir = followingWall ^ clockwise ? prev_move.rotateLeft().rotateLeft() : prev_move.rotateRight().rotateRight();
+        followingWall = true;
         // initial heading should be reversed since we're cutting back inside
         for (int i = 7; i >= 0; --i) {
             if (uc.canMove(dir)) {
@@ -160,7 +183,7 @@ public class BugMover {
                     return dir;
                 }
             }
-            dir = leftTurn ? dir.rotateLeft() : dir.rotateRight();
+            dir = clockwise ? dir.rotateLeft() : dir.rotateRight();
         }
         return null;
     }
