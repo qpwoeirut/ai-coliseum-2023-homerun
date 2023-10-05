@@ -649,7 +649,7 @@ public class Communications {
     }
     public Location popNearestScoutingQueue() {
         int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
-        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 50);
+        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 120);
         int bestDist = INF;
         int bestIdx = -1;
         Location bestLoc = null;
