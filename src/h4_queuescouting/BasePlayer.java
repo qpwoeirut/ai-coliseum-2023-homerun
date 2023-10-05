@@ -56,6 +56,7 @@ abstract public class BasePlayer {
     }
 
     protected void endTurn() {
+//        debugBytecode("end of turn");
         final int currentRound = uc.getRound();
         senseAndReportGrassIfNecessary();
         comms.useRemainingBytecode(currentRound);
@@ -103,7 +104,7 @@ abstract public class BasePlayer {
     }
 
     protected void debug(String message) {
-        if (800 <= uc.getRound() && uc.getRound() <= 1000) uc.println(message);
+        if (uc.getRound() <= 1500) uc.println(message);
     }
 
     protected void debugBytecode(String message) {
