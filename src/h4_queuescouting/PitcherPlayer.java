@@ -28,23 +28,7 @@ public class PitcherPlayer extends BasePlayer {
             }
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
-
-            if (claimedObjectLocation != null) {
-                if (claimedObjectType == MapObject.BASE) {
-                    comms.updateClaimOnBase(claimedObjectId);
-                } else {
-                    comms.updateClaimOnStadium(claimedObjectId);
-                }
-                if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
-                    Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
-                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
-                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
-                        uc.move(toMove);
-                    } else {
-                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(claimedObjectLocation), directionOkay);
-                    }
-                }
-            } else {
+            if (claimedObjectLocation == null) {
                 final int unclaimedStadiumCount = comms.listUnclaimedStadiums();
 //                uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
                 final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
@@ -69,6 +53,25 @@ public class PitcherPlayer extends BasePlayer {
                         comms.claimBase(claimedObjectId);
                     }
                 }
+            }
+
+            if (claimedObjectLocation != null) {
+                if (claimedObjectType == MapObject.BASE) {
+                    comms.updateClaimOnBase(claimedObjectId);
+                } else {
+                    comms.updateClaimOnStadium(claimedObjectId);
+                }
+                if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
+                    Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
+                    if (toMove == null) toMove = bg.move(claimedObjectLocation);
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
+                        uc.move(toMove);
+                    } else {
+                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(claimedObjectLocation), directionOkay);
+                    }
+                }
+            } else if (uc.canMove()) {
+                Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
             }
 
             endTurn();
