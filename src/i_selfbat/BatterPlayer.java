@@ -230,7 +230,7 @@ public class BatterPlayer extends BasePlayer {
 
         // run this GameConstants.MAX_STRENGTH=3 times
         Location loc = target.getLocation().add(dir);
-        if (uc.getLocation().distanceSquared(loc) > uc.getType().getStat(UnitStat.VISION_RANGE)) return 0;
+        if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
         if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
         MapObject map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);
@@ -238,7 +238,7 @@ public class BatterPlayer extends BasePlayer {
         if (unit != null) return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
 
         loc = loc.add(dir);
-        if (uc.getLocation().distanceSquared(loc) > uc.getType().getStat(UnitStat.VISION_RANGE)) return 0;
+        if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
         if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
         map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);
@@ -246,7 +246,7 @@ public class BatterPlayer extends BasePlayer {
         if (unit != null) return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
 
         loc = loc.add(dir);
-        if (uc.getLocation().distanceSquared(loc) > uc.getType().getStat(UnitStat.VISION_RANGE)) return 0;
+        if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
         if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
         map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);

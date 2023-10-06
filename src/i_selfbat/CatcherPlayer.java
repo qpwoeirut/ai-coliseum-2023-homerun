@@ -37,7 +37,7 @@ public class CatcherPlayer extends BasePlayer {
             if (uc.canMove()) {
                 if (target == null ||
                         uc.getLocation().distanceSquared(target) <= 4 ||  // this cutoff is intentionally lower than the cutoff in comms
-                        (uc.getLocation().distanceSquared(target) <= uc.getType().getStat(UnitStat.VISION_RANGE) &&
+                        (uc.getLocation().distanceSquared(target) <= VISION &&
                                 (uc.isOutOfMap(target) || uc.senseObjectAtLocation(target, false) == MapObject.WATER))) {
                     target = comms.popNearestScoutingQueue();
                     reachedFocalPoint = false;
