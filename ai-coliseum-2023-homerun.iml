@@ -26,6 +26,10 @@
       <excludeFolder url="file://$MODULE_DIR$/src/f_adjustmicrofixgodnav" />
       <excludeFolder url="file://$MODULE_DIR$/challenges" />
       <excludeFolder url="file://$MODULE_DIR$/src/g_fixgodnavbugs" />
+      <excludeFolder url="file://$MODULE_DIR$/src/h1_spiralscouting" />
+      <excludeFolder url="file://$MODULE_DIR$/src/h2_micro" />
+      <excludeFolder url="file://$MODULE_DIR$/src/h3_linescouting" />
+      <excludeFolder url="file://$MODULE_DIR$/src/h4_queuescouting" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
