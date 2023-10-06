@@ -340,9 +340,9 @@ public class Communications {
             final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
             if (readMapLocation(0, x, y) < PASSABLE) {
                 writeMapLocation(0, x, y, PASSABLE);
-                if (x % 10 == 0 && y % 10 == 0) {
+                if (x % 8 == 0 && y % 8 == 0) {
                     // don't need to update mapCount for the new maps since they haven't started processing yet
-                    createDistanceMapIfNotExists(grass[i], 9);
+                    createDistanceMapIfNotExists(grass[i], 7);
                 }
 
                 boolean shouldAdd = false;
@@ -378,7 +378,7 @@ public class Communications {
                         }
                     }
                 }
-                if (shouldAdd && (x + x + y) % 9 == 0) {  // (x + x + y) % 9 generates a spread out pattern
+                if (shouldAdd && (x + x + y) % 7 == 0) {  // (x + x + y) % 7 generates a spread out pattern
                     addToScoutingQueue(x, y);
                 }
             }
@@ -547,6 +547,7 @@ public class Communications {
         final int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
         final int bestIdx = findBestDistanceMapIdx(curX, curY, convertToInternalX(externalTargetLoc.x), convertToInternalY(externalTargetLoc.y));
         if (bestIdx == -1) return null;
+        uc.println("fp: " + bestIdx + " " + convertToExternalX(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_X)) + " " + convertToExternalY(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_Y)));
 
         final int currentDist = readMapLocation(bestIdx, curX, curY);
 //        uc.println("going to " + externalTargetLoc + ", dist " + currentDist);
