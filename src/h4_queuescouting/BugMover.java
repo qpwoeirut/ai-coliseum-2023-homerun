@@ -12,7 +12,7 @@ public class BugMover {
     private final int INF = 10000;
     private int stage = 0;
     public Location target = null;
-    private Direction prev_move = Direction.SOUTH;
+    private Direction prev_move = Direction.ZERO;
     private int minDist;
 
     private boolean followingWall = false;
@@ -34,7 +34,7 @@ public class BugMover {
         target = fin;
         stage = 0;
 
-        prev_move = uc.getLocation().directionTo(fin);
+        prev_move = Direction.ZERO;
         stuckCount = 0;
         attempts = 0;
         minDist = INF;
@@ -150,6 +150,7 @@ public class BugMover {
 //            uc.println("new target received");
             init(fin);
         }
+        if (visited[prev_move.ordinal()].get(Util.packLoc(loc)) == 1) return null;  // this line is necessary since we sometimes swap away from bug0
         visited[prev_move.ordinal()].put(Util.packLoc(loc), 1);
         return bug0(fin);
     }
