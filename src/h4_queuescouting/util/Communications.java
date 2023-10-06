@@ -509,6 +509,13 @@ public class Communications {
         }
         return bestIdx;
     }
+    public int findBestDistanceMapIdx(Location currentLoc, Location targetLoc) {
+        return findBestDistanceMapIdx(convertToInternalX(currentLoc.x), convertToInternalY(currentLoc.y), convertToInternalX(targetLoc.x), convertToInternalY(targetLoc.y));
+    }
+    public int distanceFromFocalPoint(int focalPointIdx, Location externalLoc) {
+        return infIfZero(readMapLocation(focalPointIdx, convertToInternalX(externalLoc.x), convertToInternalY(externalLoc.y)));
+    }
+
     private void createDistanceMapIfNotExists(Location externalLoc, int buffer) {
         final int internalX = convertToInternalX(externalLoc.x), internalY = convertToInternalY(externalLoc.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);

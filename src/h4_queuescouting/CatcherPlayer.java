@@ -60,14 +60,19 @@ public class CatcherPlayer extends BasePlayer {
     void scoutTarget(int directionOkay) {
 //        debug("lb dist = " + comms.lowerBoundDistance(uc.getLocation(), target) + ", reachedFP = " + reachedFocalPoint);
         Direction dir = null;
-        if (!reachedFocalPoint && comms.lowerBoundDistanceGreaterThan(uc.getLocation(), target, 5 * comms.DISTANCE_UNIT)) dir = comms.directionViaFocalPoint(target, directionOkay);
+        if (!reachedFocalPoint) {
+            final int mapIdx = comms.findBestDistanceMapIdx(uc.getLocation(), target);
+//            debug("mapIdx = " + mapIdx + ", distFp = " + comms.distanceFromFocalPoint(mapIdx, target));
+            if (comms.lowerBoundDistanceGreaterThan(uc.getLocation(), target, comms.distanceFromFocalPoint(mapIdx, target))) {
+                dir = comms.directionViaFocalPoint(target, directionOkay);
+            }
+        }
 //        debug("dir from comms = " + dir);
         if (dir == Direction.ZERO) {
             dir = null;
             reachedFocalPoint = true;
         }
         if (dir == null) {
-            if (bg.target != target) bg.init(target);
             dir = bg.moveUsingBug0(target);  // don't bother with bug1. if bug0 fails, just change targets
         }
         if (dir == null) target = null;
