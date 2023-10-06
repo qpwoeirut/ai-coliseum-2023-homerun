@@ -639,8 +639,10 @@ public class Communications {
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int lbDist = (int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT);
         for (int i = n; i > 0; --i) {
-            if (infIfZero(readMapLocation(i, curX, curY)) != INF && infIfZero(readMapLocation(i, internalX, internalY)) != INF) {
-                lbDist = Math.max(lbDist, Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)));
+            final int dist1 = readMapLocation(i, curX, curY);
+            final int dist2 = readMapLocation(i, internalX, internalY);
+            if (dist1 != 0 && dist1 != INF && dist2 != 0 && dist2 != INF) {
+                lbDist = Math.max(lbDist, Math.abs(dist1 - dist2));
             }
         }
         return lbDist;
@@ -655,8 +657,9 @@ public class Communications {
         final int internalX = convertToInternalX(loc2.x), internalY = convertToInternalY(loc2.y);
         final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         for (int i = n; i > 0; --i) {
-            if (infIfZero(readMapLocation(i, curX, curY)) != INF && infIfZero(readMapLocation(i, internalX, internalY)) != INF &&
-                    Math.abs(readMapLocation(i, curX, curY) - readMapLocation(i, internalX, internalY)) > threshold) {
+            final int dist1 = readMapLocation(i, curX, curY);
+            final int dist2 = readMapLocation(i, internalX, internalY);
+            if (dist1 != 0 && dist1 != INF && dist2 != 0 && dist2 != INF && Math.abs(dist1 - dist2) > threshold) {
                 return true;
             }
         }
