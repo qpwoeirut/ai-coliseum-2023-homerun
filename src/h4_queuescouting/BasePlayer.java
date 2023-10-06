@@ -49,16 +49,16 @@ abstract public class BasePlayer {
         return enemies;
     }
 
-    protected void senseAndReportGrassIfNecessary() {
+    protected void senseAndReportGrassIfNecessary(int currentRound) {
         if (uc.getEnergyLeft() >= 1500 && !comms.grassAlreadySensedAtLocation()) {
-            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, VISION));
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, VISION), currentRound);
         }
     }
 
     protected void endTurn() {
 //        debugBytecode("end of turn");
         final int currentRound = uc.getRound();
-        senseAndReportGrassIfNecessary();
+        senseAndReportGrassIfNecessary(currentRound);
         comms.useRemainingBytecode(currentRound);
         if (uc.getRound() == currentRound) uc.yield();
     }

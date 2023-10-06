@@ -75,13 +75,13 @@ public class HqPlayer extends BasePlayer {
     }
 
     @Override
-    protected void senseAndReportGrassIfNecessary() {
+    protected void senseAndReportGrassIfNecessary(int currentRound) {
         // first round is round 0
         if (currentGrassVision < VISION) {
-            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision), currentRound);
             currentGrassVision = Math.min(currentGrassVision + grassSensingIncrement, (int)VISION);
         } else if (currentGrassVision == VISION) {
-            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision));
+            comms.reportNewGrassAtEndOfTurn(uc.senseObjects(MapObject.GRASS, currentGrassVision), currentRound);
             ++currentGrassVision;
         }
     }

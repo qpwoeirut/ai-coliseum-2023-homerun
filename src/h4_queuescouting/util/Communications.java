@@ -331,10 +331,10 @@ public class Communications {
     // this way, we assume everything is blocked until we see otherwise
     // this must be called AFTER reportNewBases/Stadiums
     // ideally call this at the end of the turn
-    public void reportNewGrassAtEndOfTurn(Location[] grass) {
+    public void reportNewGrassAtEndOfTurn(Location[] grass, int currentRound) {
 //        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
-        for (int i = grass.length - 1; i >= 0; --i) {
+        for (int i = grass.length - 1; i >= 0 && uc.getRound() == currentRound; --i) {
             final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
             if (readMapLocation(0, x, y) < PASSABLE) {
                 writeMapLocation(0, x, y, PASSABLE);
@@ -343,6 +343,7 @@ public class Communications {
                     createDistanceMapIfNotExists(grass[i], 9);
                 }
 
+                boolean shouldAdd = false;
                 for (int m = mapCount; m > 0; --m) {
                     if (readMapLocation(m, x, y) == INF) {
                         // INF signifies that location was previously processed back when we thought it wasn't passable
@@ -371,15 +372,19 @@ public class Communications {
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
                             addToDistanceQueue(packMapIndexAndLocation(m, x, y));
+                            shouldAdd = true;
                         }
                     }
+                }
+                if (shouldAdd && (x + x + y) % 9 == 0) {  // (x + x + y) % 9 generates a spread out pattern
+                    addToScoutingQueue(x, y);
                 }
             }
         }
 
         final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
         writeMapLocation(0, x, y, SENSED);
-        if (uc.getType() == UnitType.CATCHER) {
+        if (uc.getType() == UnitType.CATCHER || uc.getType() == UnitType.HQ) {
             if (readMapLocation(0, x - 1, y) == PASSABLE) writeMapLocation(0, x - 1, y, SENSED);
             if (readMapLocation(0, x, y - 1) == PASSABLE) writeMapLocation(0, x, y - 1, SENSED);
             if (readMapLocation(0, x, y + 1) == PASSABLE) writeMapLocation(0, x, y + 1, SENSED);
@@ -442,15 +447,14 @@ public class Communications {
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
 
-            boolean shouldAddToScoutingQueue = checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x, y + 1, dist, DISTANCE_UNIT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y, dist, DISTANCE_UNIT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT);
-            shouldAddToScoutingQueue |= checkLocation(mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT);
-            if (shouldAddToScoutingQueue) addToScoutingQueue(x, y);
+            checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x, y + 1, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x + 1, y, dist, DISTANCE_UNIT);
+            checkLocation(mapIdx, x - 1, y - 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x - 1, y + 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x + 1, y - 1, dist, DISTANCE_ROOT);
+            checkLocation(mapIdx, x + 1, y + 1, dist, DISTANCE_ROOT);
         }
     }
 
@@ -665,8 +669,10 @@ public class Communications {
         uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END, (queueEnd + 1) % SCOUTING_QUEUE_SIZE);
     }
     public Location popNearestScoutingQueue() {
+        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+
         int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
-        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 120);
+        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 400 / n);
         int bestDist = INF;
         int bestIdx = -1;
         Location bestLoc = null;
@@ -699,8 +705,7 @@ public class Communications {
             }
 
             Location loc = new Location(convertToExternalX(x), convertToExternalY(y));
-            final int dist = uc.getLocation().distanceSquared(loc);
-            if (dist <= 9 || (dist <= uc.getType().getStat(UnitStat.VISION_RANGE) && (uc.isOutOfMap(loc) || uc.senseObjectAtLocation(loc, false) == MapObject.WATER))) {
+            if (uc.getLocation().distanceSquared(loc) <= 9) {
                 if (queueStart == i) {
                     ++queueStart;
                     uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
@@ -708,8 +713,8 @@ public class Communications {
                 uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
                 continue;
             }
-            if (bestDist > dist) {
-                bestDist = dist;
+            if (!lowerBoundDistanceGreaterThan(uc.getLocation(), loc, bestDist)) {
+                bestDist = lowerBoundDistance(loc);
                 bestIdx = i;
                 bestLoc = loc;
             }
@@ -717,5 +722,48 @@ public class Communications {
 
         if (bestIdx != -1) uc.write(SCOUTING_QUEUE_OFFSET + bestIdx, -1);
         return bestLoc;
+    }
+
+    public void updateScoutingQueue() {
+        int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
+        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 50);
+        for (int i = queueStart; i < queueEnd; ++i) {
+            final int val = uc.read(SCOUTING_QUEUE_OFFSET + i);
+            if (val == -1) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                continue;
+            }
+
+            final int x = val / MAP_DIMENSION, y = val % MAP_DIMENSION;
+            if (readMapLocation(0, x - 1, y - 1) == SENSED ||
+                    readMapLocation(0, x - 1, y) == SENSED ||
+                    readMapLocation(0, x - 1, y + 1) == SENSED ||
+                    readMapLocation(0, x, y - 1) == SENSED ||
+                    readMapLocation(0, x, y) == SENSED ||
+                    readMapLocation(0, x, y + 1) == SENSED ||
+                    readMapLocation(0, x + 1, y - 1) == SENSED ||
+                    readMapLocation(0, x + 1, y) == SENSED ||
+                    readMapLocation(0, x + 1, y + 1) == SENSED) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
+                continue;
+            }
+
+            Location loc = new Location(convertToExternalX(x), convertToExternalY(y));
+            if (uc.getLocation().distanceSquared(loc) <= 9) {
+                if (queueStart == i) {
+                    ++queueStart;
+                    uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
+                }
+                uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
+                continue;
+            }
+        }
     }
 }

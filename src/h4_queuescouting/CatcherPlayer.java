@@ -13,9 +13,11 @@ public class CatcherPlayer extends BasePlayer {
         Location target = null;
         boolean reachedFocalPoint = false;
         while (true) {
+//            debugBytecode("start turn");
             comms.checkIn();
             senseAndReportBases();
             senseAndReportStadiums();
+//            debugBytecode("after reporting objects");
 
             final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
             final int directionOkay = calculateOkayDirections(nearbyEnemies);
@@ -25,15 +27,17 @@ public class CatcherPlayer extends BasePlayer {
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
 
+//            debugBytecode("before move");
             if (uc.canMove()) {
-//                debugBytecode("start move");
                 if (target == null ||
-                        uc.getLocation().distanceSquared(target) <= 9 ||
+                        uc.getLocation().distanceSquared(target) <= 4 ||  // this cutoff is intentionally lower than the cutoff in comms
                         (uc.getLocation().distanceSquared(target) <= uc.getType().getStat(UnitStat.VISION_RANGE) &&
                                 (uc.isOutOfMap(target) || uc.senseObjectAtLocation(target, false) == MapObject.WATER))) {
                     target = comms.popNearestScoutingQueue();
                     reachedFocalPoint = false;
                     if (target != null) scoutTimer = (int)(Util.movementDistance(uc.getLocation(), target) * 2);
+                } else {
+                    comms.updateScoutingQueue();
                 }
 //                debug("target = " + target + ", scoutTimer = " + scoutTimer);
                 if (target != null) {
@@ -58,7 +62,7 @@ public class CatcherPlayer extends BasePlayer {
                     }
                 } else {
 //                    debug("target = null");
-                    Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
+                    Util.tryMoveInOkayDirection(uc, Direction.values()[((uc.getRound() / 20) + uc.getInfo().getID()) % 8], directionOkay);
                 }
 
                 if (--scoutTimer <= 0) {
