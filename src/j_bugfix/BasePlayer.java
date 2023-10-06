@@ -104,7 +104,7 @@ abstract public class BasePlayer {
     }
 
     protected void debug(String message) {
-        if (uc.getRound() <= 1500) uc.println(message);
+        if (uc.getRound() <= 400) uc.println(message);
     }
 
     protected void debugBytecode(String message) {
