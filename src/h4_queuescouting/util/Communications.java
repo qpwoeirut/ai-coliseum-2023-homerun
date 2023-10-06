@@ -91,22 +91,21 @@ public class Communications {
     }
 
     private void reportNewObjects(Location[] locs, int offset) {
-        final int n = uc.read(offset);
-        int m = 0;
+        int n = uc.read(offset);
         for (int locIdx = locs.length - 1; locIdx >= 0; --locIdx) {
             final int internalX = convertToInternalX(locs[locIdx].x), internalY = convertToInternalY(locs[locIdx].y);
             if (readMapLocation(0, internalX, internalY) == UNINITIALIZED) {
                 writeMapLocation(0, internalX, internalY, UNPROCESSED);
-                uc.write(offset + OBJECT_SIZE * (n + m) + OBJECT_X, locs[locIdx].x);
-                uc.write(offset + OBJECT_SIZE * (n + m) + OBJECT_Y, locs[locIdx].y);
-                uc.write(offset + OBJECT_SIZE * (n + m) + CLAIM_ID, NO_CLAIM);
-                uc.write(offset + OBJECT_SIZE * (n + m) + CLAIM_ROUND, NO_CLAIM);
-                ++m;
+                uc.write(offset + OBJECT_SIZE * n + OBJECT_X, locs[locIdx].x);
+                uc.write(offset + OBJECT_SIZE * n + OBJECT_Y, locs[locIdx].y);
+                uc.write(offset + OBJECT_SIZE * n + CLAIM_ID, NO_CLAIM);
+                uc.write(offset + OBJECT_SIZE * n + CLAIM_ROUND, NO_CLAIM);
+                ++n;
 
                 createDistanceMapIfNotExists(locs[locIdx], 1);
             }
         }
-        uc.write(offset, n + m);
+        uc.write(offset, n);
     }
 
     private void reportNewObject(Location loc, int offset) {
