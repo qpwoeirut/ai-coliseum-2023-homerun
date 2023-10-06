@@ -56,20 +56,6 @@ public class BatterPlayer extends BasePlayer {
 //        debugBytecode("start normalBehavior");
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//            uc.println("enemy batter at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
-            // TODO: move batters in knight's move shapes. until then we should probably just run away
-//            UnitInfo[] allies = uc.senseUnits(VISION, uc.getTeam());
-//            int batters = 0, catchers = 0, pitchers = 0, hq = 0;
-//            for (int i = allies.length - 1; i >= 0; --i) {
-//                if (allies[i].getType() == UnitType.BATTER) ++batters;
-//                else if (allies[i].getType() == UnitType.CATCHER) ++catchers;
-//                else if (allies[i].getType() == UnitType.PITCHER) ++pitchers;
-//                else ++hq;
-//            }
-//            if (batters > 1 || pitchers > 0 || hq > 0) {  // just attack or smth, its probably fine
-//                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-//            }
-
             int bestDir = -1;
             int bestChebyshevDist = 100;
             for (int i = 8; i >= 0; --i) {
