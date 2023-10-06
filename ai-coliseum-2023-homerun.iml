@@ -30,6 +30,8 @@
       <excludeFolder url="file://$MODULE_DIR$/src/h2_micro" />
       <excludeFolder url="file://$MODULE_DIR$/src/h3_linescouting" />
       <excludeFolder url="file://$MODULE_DIR$/src/h4_queuescouting" />
+      <excludeFolder url="file://$MODULE_DIR$/src/i_selfbat" />
+      <excludeFolder url="file://$MODULE_DIR$/src/j_bugfix" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
