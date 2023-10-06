@@ -463,19 +463,15 @@ public class Communications {
      * @param newY       y value of coordinate to check
      * @param dist       current distance
      * @param distChange amount that dist will be incremented for newX and newY
-     * @return whether to add the original location to the scouting queue
      */
-    private boolean checkLocation(int mapIdx, int newX, int newY, int dist, int distChange) {
+    private void checkLocation(int mapIdx, int newX, int newY, int dist, int distChange) {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
                 addToDistanceQueue(packMapIndexAndLocation(mapIdx, newX, newY));
             }
-            return false;
         } else {
-            boolean ret = mapIdx == 1 && readMapLocation(mapIdx, newX, newY) == UNINITIALIZED;
             writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
-            return ret;
         }
     }
 
