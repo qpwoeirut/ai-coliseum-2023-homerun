@@ -38,6 +38,15 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
+
+            if (uc.canAct()) {
+                final UnitInfo[] allies = uc.senseUnits(8, uc.getTeam());
+                final int toSelfBat = pickTargetIndexToSelfBat(allies);
+                if (toSelfBat != -1) {
+                    final int index = toSelfBat / 9 / 4, dirIdx = (toSelfBat / 4) % 9, strength = toSelfBat % 4;
+                    selfBat(allies[index], strength, Direction.values()[dirIdx]);
+                }
+            }
 //            debugBytecode("after attack");
 
             if (uc.canMove()) {
@@ -100,6 +109,69 @@ public class BatterPlayer extends BasePlayer {
             }
         }
 //        debugBytecode("end normalBehavior");
+    }
+
+    void selfBat(UnitInfo ally, int strength, Direction toMove) {
+        if (toMove != Direction.ZERO && uc.canMove(toMove)) {
+            uc.move(toMove);
+        }
+        if (uc.canBat(uc.getLocation().directionTo(ally.getLocation()), strength)) {
+            uc.schedule(ally.getID());
+            uc.bat(uc.getLocation().directionTo(ally.getLocation()), strength);
+        }
+    }
+
+    int pickTargetIndexToSelfBat(UnitInfo[] allies) {
+        for (int i = allies.length - 1; i >= 0; --i) {
+            if (allies[i].getType() != UnitType.BATTER ||
+                    !uc.canSchedule(allies[i].getID()) ||
+                    uc.getInfo().getCurrentMovementCooldown() >= 1 ||
+                    uc.getInfo().getCurrentActionCooldown() >= 1 ||
+                    Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) > 2) {
+                continue;
+            }
+            if (!uc.canMove()) {
+                if (Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) <= 1) {
+                    final int strength = selfBatStrength(allies[i], uc.getLocation().directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + Direction.ZERO.ordinal()) * 4 + strength;
+                }
+                continue;
+            }
+
+            // try cardinal directions first so that move cooldown is smaller
+            for (int d = 8; d >= 0; --d) {
+                if (uc.canMove(Direction.values()[d])) {
+                    final Location loc = uc.getLocation().add(Direction.values()[d]);
+                    if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                        final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                        if (strength > 0) return (i * 9 + d) * 4 + strength;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    int selfBatStrength(UnitInfo target, Direction dir) {
+        Location loc = target.getLocation().add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 0;
+        MapObject map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 0;
+        if (uc.senseUnitAtLocation(loc) != null) return 0;
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 1;
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 1;
+        if (uc.senseUnitAtLocation(loc) != null) return 1;
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 2;
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 2;
+        if (uc.senseUnitAtLocation(loc) != null) return 2;
+
+        return 3;
     }
 
     void patrol(UnitInfo[] enemies) {
