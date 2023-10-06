@@ -24,14 +24,12 @@ public class BatterPlayer extends BasePlayer {
 //            debugBytecode("after reporting bases/stadiums");
 
             UnitInfo[] enemies = uc.senseUnits(VISION, uc.getOpponent());
-            UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
-            final int directionOkay = calculateOkayDirections(nearbyEnemies);
 //            debug("Enemies: " + enemies.length);
             if (uc.canAct()) {
                 final UnitInfo toAttack = pickTargetToAttack(enemies);
 //                debugBytecode("after pickTarget");
                 if (toAttack != null) {
-//                    uc.println("toAttack " + toAttack.getLocation().x + " " + toAttack.getLocation().y);
+//                    debug("toAttack " + toAttack.getLocation());
                     attack(toAttack);
                     enemies = senseAndReportEnemies();  // if we need to cut bytecode we can make this more efficient
                 } else {
@@ -44,6 +42,7 @@ public class BatterPlayer extends BasePlayer {
                 final int toSelfBat = pickTargetIndexToSelfBat(allies);
                 if (toSelfBat != -1) {
                     final int index = toSelfBat / 9 / 4, dirIdx = (toSelfBat / 4) % 9, strength = toSelfBat % 4;
+//                    debug("toSelfBat " + allies[index].getLocation() + " " + strength);
                     selfBat(allies[index], strength, Direction.values()[dirIdx]);
                 }
             }
@@ -53,7 +52,7 @@ public class BatterPlayer extends BasePlayer {
                 if (patrolLoc != null) {
                     patrol(enemies);
                 } else {
-                    normalBehavior(enemies, directionOkay);
+                    normalBehavior(enemies);
                 }
             }
 
@@ -61,8 +60,12 @@ public class BatterPlayer extends BasePlayer {
         }
     }
 
-    void normalBehavior(UnitInfo[] enemies, int directionOkay) {
+    void normalBehavior(UnitInfo[] enemies) {
 //        debugBytecode("start normalBehavior");
+        final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+        final int directionOkay = calculateOkayDirections(nearbyEnemies);
+//        debugBytecode("end directionOkay");
+
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
             int bestDir = -1;
