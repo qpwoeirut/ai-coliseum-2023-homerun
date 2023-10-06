@@ -547,7 +547,7 @@ public class Communications {
         final int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
         final int bestIdx = findBestDistanceMapIdx(curX, curY, convertToInternalX(externalTargetLoc.x), convertToInternalY(externalTargetLoc.y));
         if (bestIdx == -1) return null;
-        uc.println("fp: " + bestIdx + " " + convertToExternalX(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_X)) + " " + convertToExternalY(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_Y)));
+//        uc.println("fp: " + bestIdx + " " + convertToExternalX(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_X)) + " " + convertToExternalY(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_Y)));
 
         final int currentDist = readMapLocation(bestIdx, curX, curY);
 //        uc.println("going to " + externalTargetLoc + ", dist " + currentDist);
