@@ -330,6 +330,9 @@ public class Communications {
     // this way, we assume everything is blocked until we see otherwise
     // this must be called AFTER reportNewBases/Stadiums
     // ideally call this at the end of the turn
+    public Location getSelfHQLocation () {
+        return new Location(uc.read(MAP_OFFSET + ORIGIN_X), uc.read(MAP_OFFSET + ORIGIN_Y));
+    }
     public void reportNewGrassAtEndOfTurn(Location[] grass, int currentRound) {
 //        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
@@ -438,6 +441,7 @@ public class Communications {
         while (uc.getRound() == currentRound && uc.getEnergyLeft() >= 50) {
             // move queue pointer writes/reads to be as close together as possible
             final int queueStart = uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START);
+//            uc.println("queue: " + queueStart + " " + uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END));
             if (queueStart == uc.read(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_END)) return;
             uc.write(DISTANCE_QUEUE_OFFSET + DISTANCE_QUEUE_START, (queueStart + 1) % DISTANCE_QUEUE_SIZE);
 
@@ -708,8 +712,8 @@ public class Communications {
                 uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
                 continue;
             }
-            if (!lowerBoundDistanceGreaterThan(uc.getLocation(), loc, bestDist)) {
-                bestDist = lowerBoundDistance(loc);
+            if (!lowerBoundDistanceGreaterThan(uc.getLocation(), loc, bestDist + (int)(Util.movementDistance(getSelfHQLocation(), loc)))) {
+                bestDist = lowerBoundDistance(loc) - (int)(Util.movementDistance(getSelfHQLocation(), loc));  // tiebreaks since lowerBoundDistance is in DISTANCE_UNITs
                 bestIdx = i;
                 bestLoc = loc;
             }
