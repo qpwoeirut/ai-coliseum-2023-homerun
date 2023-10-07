@@ -76,7 +76,6 @@ public class Communications {
         if (uc.getType() == UnitType.HQ) {
             uc.write(MAP_OFFSET + ORIGIN_X, uc.getLocation().x);
             uc.write(MAP_OFFSET + ORIGIN_Y, uc.getLocation().y);
-            createDistanceMapIfNotExists(uc.getLocation(), 0);
         }
     }
 
@@ -335,7 +334,7 @@ public class Communications {
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         for (int i = grass.length - 1; i >= 0 && uc.getRound() == currentRound; --i) {
             final int x = convertToInternalX(grass[i].x), y = convertToInternalY(grass[i].y);
-            if (readMapLocation(0, x, y) < PASSABLE) {
+            if (readMapLocation(0, x, y) < PASSABLE && !getSelfHQLocation().isEqual(grass[i])) {
                 writeMapLocation(0, x, y, PASSABLE);
                 if (x % 8 == 0 && y % 8 == 0) {
                     // don't need to update mapCount for the new maps since they haven't started processing yet
@@ -382,7 +381,7 @@ public class Communications {
         }
 
         final int x = convertToInternalX(uc.getLocation().x), y = convertToInternalY(uc.getLocation().y);
-        writeMapLocation(0, x, y, SENSED);
+        if (readMapLocation(0, x, y) == PASSABLE) writeMapLocation(0, x, y, SENSED);  // we need to include the check to make sure the HQ doesn't get marked as SENSED
         if (uc.getType() == UnitType.CATCHER || uc.getType() == UnitType.HQ) {
             if (readMapLocation(0, x - 1, y) == PASSABLE) writeMapLocation(0, x - 1, y, SENSED);
             if (readMapLocation(0, x, y - 1) == PASSABLE) writeMapLocation(0, x, y - 1, SENSED);
@@ -449,6 +448,7 @@ public class Communications {
             if (cur == 0) uc.println("This is bad! cur = 0, queueStart = " + queueStart);
             final int mapIdx = (cur / MAP_DIMENSION) / MAP_DIMENSION, x = (cur / MAP_DIMENSION) % MAP_DIMENSION, y = cur % MAP_DIMENSION;
             final int dist = readMapLocation(mapIdx, x, y);
+//            uc.println(mapIdx + " " + x + " " + y);
 
             checkLocation(mapIdx, x - 1, y, dist, DISTANCE_UNIT);
             checkLocation(mapIdx, x, y - 1, dist, DISTANCE_UNIT);
@@ -679,7 +679,7 @@ public class Communications {
         uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END, (queueEnd + 1) % SCOUTING_QUEUE_SIZE);
     }
     public Location popNearestScoutingQueue() {
-        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
+        final int n = Math.max(1, uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT));
 
         int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
         final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 400 / n);
