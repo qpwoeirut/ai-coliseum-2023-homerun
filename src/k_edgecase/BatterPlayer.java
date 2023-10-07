@@ -68,6 +68,7 @@ public class BatterPlayer extends BasePlayer {
 
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
         if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
+//            debug("enemy at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
             int bestDir = -1;
             int bestChebyshevDist = 100;
             for (int i = 8; i >= 0; --i) {
@@ -85,7 +86,7 @@ public class BatterPlayer extends BasePlayer {
         } else {
             final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
             if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//                uc.println("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
+//                debug("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
                 Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
             } else {
                 final int reportedEnemyCount = comms.listEnemySightings();
