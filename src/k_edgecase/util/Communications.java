@@ -330,9 +330,6 @@ public class Communications {
     // this way, we assume everything is blocked until we see otherwise
     // this must be called AFTER reportNewBases/Stadiums
     // ideally call this at the end of the turn
-    public Location getSelfHQLocation () {
-        return new Location(uc.read(MAP_OFFSET + ORIGIN_X), uc.read(MAP_OFFSET + ORIGIN_Y));
-    }
     public void reportNewGrassAtEndOfTurn(Location[] grass, int currentRound) {
 //        uc.println("start grass " + uc.getEnergyUsed());
         final int mapCount = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
@@ -393,6 +390,9 @@ public class Communications {
             if (readMapLocation(0, x + 1, y) == PASSABLE) writeMapLocation(0, x + 1, y, SENSED);
         }
 //        uc.println("end grass " + uc.getEnergyUsed());
+    }
+    public Location getSelfHQLocation() {
+        return new Location(uc.read(MAP_OFFSET + ORIGIN_X), uc.read(MAP_OFFSET + ORIGIN_Y));
     }
     public boolean grassAlreadySensedAtLocation() {
         if (uc.getType() == UnitType.CATCHER) {
@@ -772,7 +772,6 @@ public class Communications {
                     uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START, queueStart);
                 }
                 uc.write(SCOUTING_QUEUE_OFFSET + i, -1);
-                continue;
             }
         }
     }
