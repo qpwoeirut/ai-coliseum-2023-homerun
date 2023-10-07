@@ -115,111 +115,6 @@ public class BatterPlayer extends BasePlayer {
 //        debugBytecode("end normalBehavior");
     }
 
-    void selfBat(UnitInfo ally, int strength, Direction toMove) {
-        if (toMove != Direction.ZERO && uc.canMove(toMove)) {
-            uc.move(toMove);
-        }
-        if (uc.canBat(uc.getLocation().directionTo(ally.getLocation()), strength)) {
-            uc.schedule(ally.getID());
-            uc.bat(uc.getLocation().directionTo(ally.getLocation()), strength);
-        }
-    }
-
-    int pickTargetIndexToSelfBat(UnitInfo[] allies) {
-        for (int i = allies.length - 1; i >= 0; --i) {
-            if (allies[i].getType() != UnitType.BATTER ||
-                    !uc.canSchedule(allies[i].getID()) ||
-                    uc.getInfo().getCurrentMovementCooldown() >= 1 ||
-                    uc.getInfo().getCurrentActionCooldown() >= 1 ||
-                    Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) > 2) {
-                continue;
-            }
-            if (!uc.canMove()) {
-                if (Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) <= 1) {
-                    final int strength = selfBatStrength(allies[i], uc.getLocation().directionTo(allies[i].getLocation()));
-                    if (strength > 0) return (i * 9 + Direction.ZERO.ordinal()) * 4 + strength;
-                }
-                continue;
-            }
-
-            // try cardinal directions first so that move cooldown is smaller
-            for (int d = 8; d >= 0; --d) {
-                if (uc.canMove(Direction.values()[d])) {
-                    final Location loc = uc.getLocation().add(Direction.values()[d]);
-                    if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
-                        final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
-                        if (strength > 0) return (i * 9 + d) * 4 + strength;
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
-    int selfBatStrength(UnitInfo target, Direction dir) {
-        Location loc = target.getLocation().add(dir);
-        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 0;
-        MapObject map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return 0;
-        if (uc.senseUnitAtLocation(loc) != null) return 0;
-
-        loc = loc.add(dir);
-        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 1;
-        map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return 1;
-        if (uc.senseUnitAtLocation(loc) != null) return 1;
-
-        loc = loc.add(dir);
-        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 2;
-        map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return 2;
-        if (uc.senseUnitAtLocation(loc) != null) return 2;
-
-        return 3;
-    }
-
-    void patrol(UnitInfo[] enemies) {
-        final int PATROL_DISTANCE = 72;  // range it can go to attack other units, relative to patrolLoc
-        final int IDLE_DISTANCE = 8;  // range the batter should stay in the designated patrol location, when no enemies
-        final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-        if (nearestEnemyBatter == null) {
-            //try to go after unit sighted, within patrol zone
-            if (nearestEnemy != null && uc.getLocation().distanceSquared(nearestEnemy.getLocation()) < PATROL_DISTANCE) {
-                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-            } else {//no enemies within range
-                //within idle zone
-                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE) {
-                    //randomly move around in the zone
-                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
-                }
-                //outside idle zone
-                else{
-                    final Direction toMove = bg.move(patrolLoc);
-                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
-                        uc.move(toMove);
-                    }
-                }
-            }
-        } else {
-            if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= PATROL_DISTANCE) {
-                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));
-            }
-            else{//enemy is out of range, so just chill in the zone
-                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
-                    //randomly move around in the zone
-                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
-                }
-                else{
-                    final Direction toMove = bg.move(patrolLoc);
-                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
-                        uc.move(toMove);
-                    }
-                }
-            }
-        }
-    }
-
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
 //        debugBytecode("pickTarget start");
 
@@ -331,6 +226,111 @@ public class BatterPlayer extends BasePlayer {
 
 //        debugBytecode("hitEffectiveness end");
         return 0;
+    }
+
+    int pickTargetIndexToSelfBat(UnitInfo[] allies) {
+        for (int i = allies.length - 1; i >= 0; --i) {
+            if (allies[i].getType() != UnitType.BATTER ||
+                    !uc.canSchedule(allies[i].getID()) ||
+                    uc.getInfo().getCurrentMovementCooldown() >= 1 ||
+                    uc.getInfo().getCurrentActionCooldown() >= 1 ||
+                    Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) > 2) {
+                continue;
+            }
+            if (!uc.canMove()) {
+                if (Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) <= 1) {
+                    final int strength = selfBatStrength(allies[i], uc.getLocation().directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + Direction.ZERO.ordinal()) * 4 + strength;
+                }
+                continue;
+            }
+
+            // try cardinal directions first so that move cooldown is smaller
+            for (int d = 8; d >= 0; --d) {
+                if (uc.canMove(Direction.values()[d])) {
+                    final Location loc = uc.getLocation().add(Direction.values()[d]);
+                    if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                        final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                        if (strength > 0) return (i * 9 + d) * 4 + strength;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    int selfBatStrength(UnitInfo target, Direction dir) {
+        Location loc = target.getLocation().add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 0;
+        MapObject map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 0;
+        if (uc.senseUnitAtLocation(loc) != null) return 0;
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 1;
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 1;
+        if (uc.senseUnitAtLocation(loc) != null) return 1;
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION || uc.isOutOfMap(loc)) return 2;
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 2;
+        if (uc.senseUnitAtLocation(loc) != null) return 2;
+
+        return 3;
+    }
+
+    void selfBat(UnitInfo ally, int strength, Direction toMove) {
+        if (toMove != Direction.ZERO && uc.canMove(toMove)) {
+            uc.move(toMove);
+        }
+        if (uc.canBat(uc.getLocation().directionTo(ally.getLocation()), strength)) {
+            uc.schedule(ally.getID());
+            uc.bat(uc.getLocation().directionTo(ally.getLocation()), strength);
+        }
+    }
+
+    void patrol(UnitInfo[] enemies) {
+        final int PATROL_DISTANCE = 72;  // range it can go to attack other units, relative to patrolLoc
+        final int IDLE_DISTANCE = 8;  // range the batter should stay in the designated patrol location, when no enemies
+        final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
+        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+        if (nearestEnemyBatter == null) {
+            //try to go after unit sighted, within patrol zone
+            if (nearestEnemy != null && uc.getLocation().distanceSquared(nearestEnemy.getLocation()) < PATROL_DISTANCE) {
+                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+            } else {//no enemies within range
+                //within idle zone
+                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE) {
+                    //randomly move around in the zone
+                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                }
+                //outside idle zone
+                else{
+                    final Direction toMove = bg.move(patrolLoc);
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
+                        uc.move(toMove);
+                    }
+                }
+            }
+        } else {
+            if (uc.getLocation().distanceSquared(nearestEnemyBatter.getLocation()) <= PATROL_DISTANCE) {
+                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemyBatter.getLocation()));
+            }
+            else{//enemy is out of range, so just chill in the zone
+                if (uc.getLocation().distanceSquared(patrolLoc) < IDLE_DISTANCE){
+                    //randomly move around in the zone
+                    Util.tryMoveInDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)]);
+                }
+                else{
+                    final Direction toMove = bg.move(patrolLoc);
+                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
+                        uc.move(toMove);
+                    }
+                }
+            }
+        }
     }
 
     Direction spreadOut(Location idealTarget) {
