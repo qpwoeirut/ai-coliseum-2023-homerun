@@ -33,6 +33,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/i_selfbat" />
       <excludeFolder url="file://$MODULE_DIR$/src/j_bugfix" />
       <excludeFolder url="file://$MODULE_DIR$/src/k_edgecase" />
+      <excludeFolder url="file://$MODULE_DIR$/src/l_resourcemacro" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
