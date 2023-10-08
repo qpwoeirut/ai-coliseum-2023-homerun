@@ -1,10 +1,10 @@
-package m_surroundhq;
+package m2_bugfix;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
-import m_surroundhq.util.IntHashMap;
-import m_surroundhq.util.Util;
+import m2_bugfix.util.IntHashMap;
+import m2_bugfix.util.Util;
 
 public class BugMover {
 

@@ -1,8 +1,8 @@
-package m_surroundhq;
+package m1_surroundhq;
 
 import aic2023.user.*;
-import m_surroundhq.util.Communications;
-import m_surroundhq.util.Util;
+import m1_surroundhq.util.Communications;
+import m1_surroundhq.util.Util;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

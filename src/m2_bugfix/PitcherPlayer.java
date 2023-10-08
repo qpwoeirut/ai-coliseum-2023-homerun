@@ -1,7 +1,7 @@
-package m_surroundhq;
+package m2_bugfix;
 
 import aic2023.user.*;
-import m_surroundhq.util.Util;
+import m2_bugfix.util.Util;
 
 public class PitcherPlayer extends BasePlayer {
     PitcherPlayer(UnitController uc) {

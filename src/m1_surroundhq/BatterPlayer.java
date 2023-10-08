@@ -1,7 +1,7 @@
-package m_surroundhq;
+package m1_surroundhq;
 
 import aic2023.user.*;
-import m_surroundhq.util.Util;
+import m1_surroundhq.util.Util;
 
 public class BatterPlayer extends BasePlayer {
     private final int BATTER_REACHABLE_DISTANCE = 8;
@@ -34,7 +34,7 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
-            if (uc.canAct()) {
+            if (uc.canAct() && uc.getLocation().distanceSquared(comms.getEnemyHqLocation()) > 2) {
                 Location[] balls = uc.senseObjects(MapObject.BALL, REACHABLE_VISION);
                 final int ballToHit = pickBallIndex(balls);
                 if (ballToHit != -1) {
@@ -49,12 +49,12 @@ public class BatterPlayer extends BasePlayer {
                 }
             }
 
-            if (uc.canAct()) {
+            if (uc.canAct() && uc.getLocation().distanceSquared(comms.getEnemyHqLocation()) > 2) {
                 final UnitInfo[] allies = uc.senseUnits(8, uc.getTeam());
                 final int toSelfBat = pickTargetIndexToSelfBat(allies);
                 if (toSelfBat != -1) {
-//                    debug("toSelfBat " + allies[index].getLocation() + " " + strength);
                     final int index = (toSelfBat / 4) / 9, dirIdx = (toSelfBat / 4) % 9, strength = toSelfBat % 4;
+//                    debug("toSelfBat id = " + allies[index].getID() + ", loc = " + allies[index].getLocation() + ", str = " + strength + ", dir = " + Direction.values()[dirIdx]);
                     selfBat(allies[index], strength, Direction.values()[dirIdx]);
                 }
             }
@@ -68,7 +68,7 @@ public class BatterPlayer extends BasePlayer {
 
                 final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
                 if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//                    debug("enemy at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
+//                    debug("batter at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
                     int bestDir = -1;
                     int bestChebyshevDist = 100;
                     for (int i = 8; i >= 0; --i) {
@@ -84,10 +84,18 @@ public class BatterPlayer extends BasePlayer {
                         uc.move(Direction.values()[bestDir]);
                     }
                 } else {
-                    final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+//                    debug("hq " + comms.getEnemyHqLocation());
+                    final UnitInfo nearestEnemy = Util.getNearestNonHq(uc.getLocation(), enemies);
                     if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
 //                        debug("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
                         Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+                    } else if (uc.getLocation().distanceSquared(comms.getEnemyHqLocation()) <= 60) {  // default value for enemyHq is very far away
+                        // if no enemies seen, rush enemy HQ
+                        Direction dir = comms.directionViaFocalPoint(comms.getEnemyHqLocation(), directionOkay);
+                        debug("dir = " + dir);
+                        if (dir == null) dir = bg.move(comms.getEnemyHqLocation());
+                        if (dir == null) dir = uc.getLocation().directionTo(comms.getEnemyHqLocation());
+                        Util.tryMoveInDirection(uc, dir);
                     } else {
                         final int reportedEnemyCount = comms.listEnemySightings();
                         final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
@@ -329,11 +337,14 @@ public class BatterPlayer extends BasePlayer {
 
     int pickTargetIndexToSelfBat(UnitInfo[] allies) {
         for (int i = allies.length - 1; i >= 0; --i) {
-            if (allies[i].getType() != UnitType.BATTER ||
+            if (uc.getRandomDouble() < 0.2 ||  // make this a bit random to avoid getting stuck if self-batting loops
+                    allies[i].getType() != UnitType.BATTER ||
                     !uc.canSchedule(allies[i].getID()) ||
                     uc.getInfo().getCurrentMovementCooldown() >= 1 ||
                     uc.getInfo().getCurrentActionCooldown() >= 1 ||
-                    Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) > 2) {
+                    Util.chebyshevDistance(uc.getLocation(), allies[i].getLocation()) > 2 ||
+                    comms.getEnemyHqLocation().distanceSquared(allies[i].getLocation()) <= 2  // don't move batters trying to surround HQ
+            ) {
                 continue;
             }
             if (!uc.canMove()) {
@@ -394,7 +405,7 @@ public class BatterPlayer extends BasePlayer {
         final int PATROL_DISTANCE = 72;  // range it can go to attack other units, relative to patrolLoc
         final int IDLE_DISTANCE = 8;  // range the batter should stay in the designated patrol location, when no enemies
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+        final UnitInfo nearestEnemy = Util.getNearestNonHq(uc.getLocation(), enemies);
         if (nearestEnemyBatter == null) {
             //try to go after unit sighted, within patrol zone
             if (nearestEnemy != null && uc.getLocation().distanceSquared(nearestEnemy.getLocation()) < PATROL_DISTANCE) {
