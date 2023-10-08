@@ -11,8 +11,10 @@ public class Communications {
     private final int OBJECT_SIZE = 4;
     private final int OBJECT_X = 1;
     private final int OBJECT_Y = 2;
-    private final int CLAIM_ID = 3;
-    private final int CLAIM_ROUND = 4;
+    private final int PITCHER_CLAIM = 3;  // value will be ID * 2000 + round
+    private final int BATTER_CLAIM = 4;   // value will be ID * 2000 + round
+    private final int CLAIM_FACTOR = 2000;
+    private final int CLAIM_ROUND_OFFSET = 10;  // offset allows claim round value of 0 to always be unclaimed
     private final int NO_CLAIM = 0;  // IDs are in [1, 10000]
     private final int CLAIM_EXPIRATION = 3;  // if a pitcher doesn't update their claim in 3 rounds, assume they've died
 
@@ -97,8 +99,8 @@ public class Communications {
                 writeMapLocation(0, internalX, internalY, UNPROCESSED);
                 uc.write(offset + OBJECT_SIZE * n + OBJECT_X, locs[locIdx].x);
                 uc.write(offset + OBJECT_SIZE * n + OBJECT_Y, locs[locIdx].y);
-                uc.write(offset + OBJECT_SIZE * n + CLAIM_ID, NO_CLAIM);
-                uc.write(offset + OBJECT_SIZE * n + CLAIM_ROUND, NO_CLAIM);
+                uc.write(offset + OBJECT_SIZE * n + PITCHER_CLAIM, NO_CLAIM);
+                uc.write(offset + OBJECT_SIZE * n + BATTER_CLAIM, NO_CLAIM);
                 ++n;
 
                 createDistanceMapIfNotExists(locs[locIdx], 1);
@@ -117,8 +119,8 @@ public class Communications {
         uc.write(offset, n);
         uc.write(offset + OBJECT_SIZE * n + OBJECT_X, loc.x);
         uc.write(offset + OBJECT_SIZE * n + OBJECT_Y, loc.y);
-        uc.write(offset + OBJECT_SIZE * n + CLAIM_ID, NO_CLAIM);
-        uc.write(offset + OBJECT_SIZE * n + CLAIM_ROUND, NO_CLAIM);
+        uc.write(offset + OBJECT_SIZE * n + PITCHER_CLAIM, NO_CLAIM);
+        uc.write(offset + OBJECT_SIZE * n + BATTER_CLAIM, NO_CLAIM);
     }
 
     // ------------------------------------------ COUNTING UNITS ON OUR TEAM ------------------------------------------
@@ -156,26 +158,46 @@ public class Communications {
 
     // ------------------------------------------ BASE AND STADIUM CLAIMING ------------------------------------------
     /**
-     * Lists all bases that have not yet been claimed.
+     * Lists all bases that have not yet been claimed by a pitcher.
      * @return int: the number of unclaimed bases
      * The base locations can be accessed in the public returnedLocations array.
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedBases() {
-        return listUnclaimedObjects(BASE_OFFSET);
+    public int listUnclaimedBasesAsPitcher() {
+        return listUnclaimedObjects(BASE_OFFSET, PITCHER_CLAIM);
     }
 
     /**
-     * Lists all stadiums that have not yet been claimed.
+     * Lists all stadiums that have not yet been claimed by a pitcher.
      * @return int: the number of unclaimed stadiums
      * The base locations can be accessed in the public returnedLocations array
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedStadiums() {
-        return listUnclaimedObjects(STADIUM_OFFSET);
+    public int listUnclaimedStadiumsAsPitcher() {
+        return listUnclaimedObjects(STADIUM_OFFSET, PITCHER_CLAIM);
     }
 
-    private int listUnclaimedObjects(int offset) {
+    /**
+     * Lists all bases that have not yet been claimed by a batter.
+     * @return int: the number of unclaimed bases
+     * The base locations can be accessed in the public returnedLocations array.
+     * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
+     */
+    public int listUnclaimedBasesAsBatter() {
+        return listUnclaimedObjects(BASE_OFFSET, BATTER_CLAIM);
+    }
+
+    /**
+     * Lists all stadiums that have not yet been claimed by a pitcher.
+     * @return int: the number of unclaimed stadiums
+     * The base locations can be accessed in the public returnedLocations array
+     * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
+     */
+    public int listUnclaimedStadiumsAsBatter() {
+        return listUnclaimedObjects(STADIUM_OFFSET, BATTER_CLAIM);
+    }
+
+    private int listUnclaimedObjects(int offset, int claimOffset) {
         final int totalObjects = uc.read(offset);
         if (returnedLocations.length < totalObjects || returnedIds.length < totalObjects) {
             returnedLocations = new Location[totalObjects];
@@ -184,7 +206,7 @@ public class Communications {
 
         int n = 0;
         for (int i = totalObjects - 1; i >= 0; --i) {
-            if (readObjectProperty(offset, i, CLAIM_ID) == NO_CLAIM || readObjectProperty(offset, i, CLAIM_ROUND) + CLAIM_EXPIRATION < uc.getRound()) {
+            if (readObjectProperty(offset, i, claimOffset) % CLAIM_FACTOR < uc.getRound() - CLAIM_EXPIRATION + CLAIM_ROUND_OFFSET) {
                 returnedLocations[n] = new Location(readObjectProperty(offset, i, OBJECT_X), readObjectProperty(offset, i, OBJECT_Y));
                 returnedIds[n++] = i;
             }
@@ -192,19 +214,18 @@ public class Communications {
         return n;
     }
 
-    public void claimBase(int baseId) {
-        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + CLAIM_ID, uc.getInfo().getID());
-        updateClaimOnBase(baseId);
+    public void claimBaseAsPitcher(int baseId) {
+        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + PITCHER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
     }
-    public void claimStadium(int stadiumId) {
-        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + CLAIM_ID, uc.getInfo().getID());
-        updateClaimOnStadium(stadiumId);
+    public void claimStadiumAsPitcher(int stadiumId) {
+        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + PITCHER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
     }
-    public void updateClaimOnBase(int baseId) {
-        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + CLAIM_ROUND, uc.getRound());
+
+    public void claimBaseAsBatter(int baseId) {
+        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + BATTER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
     }
-    public void updateClaimOnStadium(int stadiumId) {
-        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + CLAIM_ROUND, uc.getRound());
+    public void claimStadiumAsBatter(int stadiumId) {
+        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + BATTER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
     }
 
     private int readObjectProperty(int offset, int index, int property) {

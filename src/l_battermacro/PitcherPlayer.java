@@ -29,18 +29,18 @@ public class PitcherPlayer extends BasePlayer {
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
             if (claimedObjectLocation == null) {
-                final int unclaimedStadiumCount = comms.listUnclaimedStadiums();
+                final int unclaimedStadiumCount = comms.listUnclaimedStadiumsAsPitcher();
 //                uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
                 final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
                 if (claimedStadiumIndex != -1) {
                     claimedObjectType = MapObject.STADIUM;
                     claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
                     claimedObjectId = comms.returnedIds[claimedStadiumIndex];
-                    comms.claimStadium(claimedObjectId);
+                    comms.claimStadiumAsPitcher(claimedObjectId);
                 }
 
                 if (claimedObjectLocation == null) {
-                    final int unclaimedBaseCount = comms.listUnclaimedBases();
+                    final int unclaimedBaseCount = comms.listUnclaimedBasesAsPitcher();
 //                    uc.println("unclaimedBaseCount: " + unclaimedBaseCount);
 //                    for (int i = 0; i < unclaimedBaseCount; ++i) {
 //                        uc.println(comms.returnedLocations[i] + " " + comms.returnedIds[i]);
@@ -50,16 +50,16 @@ public class PitcherPlayer extends BasePlayer {
                         claimedObjectType = MapObject.BASE;
                         claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
                         claimedObjectId = comms.returnedIds[claimedBaseIndex];
-                        comms.claimBase(claimedObjectId);
+                        comms.claimBaseAsPitcher(claimedObjectId);
                     }
                 }
             }
 
             if (claimedObjectLocation != null) {
                 if (claimedObjectType == MapObject.BASE) {
-                    comms.updateClaimOnBase(claimedObjectId);
+                    comms.claimBaseAsPitcher(claimedObjectId);
                 } else {
-                    comms.updateClaimOnStadium(claimedObjectId);
+                    comms.claimStadiumAsPitcher(claimedObjectId);
                 }
                 if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
                     Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
