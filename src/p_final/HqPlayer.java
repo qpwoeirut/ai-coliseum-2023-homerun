@@ -98,29 +98,108 @@ public class HqPlayer extends BasePlayer {
     }
 
     boolean recruitUnitSafely(UnitType type, boolean[][] hasEnemyBatter) {
-        for (int i = 7; i >= 0; --i) {
-            if (uc.canRecruitUnit(type, Direction.values()[i]) && directionIsSafe(Direction.values()[i], hasEnemyBatter)) {
-                uc.recruitUnit(type, Direction.values()[i]);
-                return true;
-            }
+        if (uc.canRecruitUnit(type, Direction.NORTHEAST) && directionIsSafe(Direction.NORTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.EAST) && directionIsSafe(Direction.EAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.EAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHEAST) && directionIsSafe(Direction.SOUTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTH) && directionIsSafe(Direction.SOUTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTH);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHWEST) && directionIsSafe(Direction.SOUTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.WEST) && directionIsSafe(Direction.WEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.WEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTHWEST) && directionIsSafe(Direction.NORTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTH) && directionIsSafe(Direction.NORTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTH);
+            return true;
         }
         return false;
     }
 
     boolean recruitUnitNextToEnemy(UnitType type, boolean[][] hasEnemyBatter) {
-        for (int i = 7; i >= 0; --i) {
-            if (uc.canRecruitUnit(type, Direction.values()[i]) && directionAdjacentToEnemy(Direction.values()[i], hasEnemyBatter)) {
-                uc.recruitUnit(type, Direction.values()[i]);
-                return true;
-            }
+        if (uc.canRecruitUnit(type, Direction.NORTHEAST) && directionAdjacentToEnemy(Direction.NORTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHEAST);
+            return true;
         }
-        for (int i = 7; i >= 0; --i) {
-            if (uc.canRecruitUnit(type, Direction.values()[i]) && !directionIsSafe(Direction.values()[i], hasEnemyBatter)) {
-                uc.recruitUnit(type, Direction.values()[i]);
-                return true;
-            }
+        if (uc.canRecruitUnit(type, Direction.EAST) && directionAdjacentToEnemy(Direction.EAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.EAST);
+            return true;
         }
-        // TODO: experiment with scheduling?
+        if (uc.canRecruitUnit(type, Direction.SOUTHEAST) && directionAdjacentToEnemy(Direction.SOUTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTH) && directionAdjacentToEnemy(Direction.SOUTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTH);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHWEST) && directionAdjacentToEnemy(Direction.SOUTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.WEST) && directionAdjacentToEnemy(Direction.WEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.WEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTHWEST) && directionAdjacentToEnemy(Direction.NORTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTH) && directionAdjacentToEnemy(Direction.NORTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTH);
+            return true;
+        }
+
+        if (uc.canRecruitUnit(type, Direction.NORTHEAST) && !directionIsSafe(Direction.NORTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.EAST) && !directionIsSafe(Direction.EAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.EAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHEAST) && !directionIsSafe(Direction.SOUTHEAST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHEAST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTH) && !directionIsSafe(Direction.SOUTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTH);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.SOUTHWEST) && !directionIsSafe(Direction.SOUTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.SOUTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.WEST) && !directionIsSafe(Direction.WEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.WEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTHWEST) && !directionIsSafe(Direction.NORTHWEST, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTHWEST);
+            return true;
+        }
+        if (uc.canRecruitUnit(type, Direction.NORTH) && !directionIsSafe(Direction.NORTH, hasEnemyBatter)) {
+            uc.recruitUnit(type, Direction.NORTH);
+            return true;
+        }
+
         return false;
     }
 
@@ -172,15 +251,32 @@ public class HqPlayer extends BasePlayer {
     boolean directionIsSafe(Direction dir, boolean[][] hasEnemyBatter) {
         final int x = OFFSET + dir.dx;
         final int y = OFFSET + dir.dy;
-        for (int dx = -2; dx <= 2; ++dx) {
-            if (hasEnemyBatter[x + dx][y - 2] ||
-                    hasEnemyBatter[x + dx][y - 1] ||
-                    hasEnemyBatter[x + dx][y    ] ||
-                    hasEnemyBatter[x + dx][y + 1] ||
-                    hasEnemyBatter[x + dx][y + 2]) {
-                return false;
-            }
-        }
-        return true;
+        return !(
+                hasEnemyBatter[x - 2][y - 2] ||
+                hasEnemyBatter[x - 2][y - 1] ||
+                hasEnemyBatter[x - 2][y    ] ||
+                hasEnemyBatter[x - 2][y + 1] ||
+                hasEnemyBatter[x - 2][y + 2] ||
+                hasEnemyBatter[x - 1][y - 2] ||
+                hasEnemyBatter[x - 1][y - 1] ||
+                hasEnemyBatter[x - 1][y    ] ||
+                hasEnemyBatter[x - 1][y + 1] ||
+                hasEnemyBatter[x - 1][y + 2] ||
+                hasEnemyBatter[x    ][y - 2] ||
+                hasEnemyBatter[x    ][y - 1] ||
+                hasEnemyBatter[x    ][y    ] ||
+                hasEnemyBatter[x    ][y + 1] ||
+                hasEnemyBatter[x    ][y + 2] ||
+                hasEnemyBatter[x + 1][y - 2] ||
+                hasEnemyBatter[x + 1][y - 1] ||
+                hasEnemyBatter[x + 1][y    ] ||
+                hasEnemyBatter[x + 1][y + 1] ||
+                hasEnemyBatter[x + 1][y + 2] ||
+                hasEnemyBatter[x + 2][y - 2] ||
+                hasEnemyBatter[x + 2][y - 1] ||
+                hasEnemyBatter[x + 2][y    ] ||
+                hasEnemyBatter[x + 2][y + 1] ||
+                hasEnemyBatter[x + 2][y + 2]
+        );
     }
 }
