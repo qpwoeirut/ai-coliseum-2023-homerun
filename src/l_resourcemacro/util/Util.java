@@ -1,4 +1,4 @@
-package l_battermacro.util;
+package l_resourcemacro.util;
 
 import aic2023.user.*;
 

@@ -1,4 +1,4 @@
-package l_battermacro;
+package l_resourcemacro;
 
 import aic2023.user.UnitController;
 import aic2023.user.UnitType;

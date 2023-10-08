@@ -1,8 +1,8 @@
-package l_battermacro;
+package l_resourcemacro;
 
 import aic2023.user.*;
-import l_battermacro.util.Communications;
-import l_battermacro.util.Util;
+import l_resourcemacro.util.Communications;
+import l_resourcemacro.util.Util;
 
 abstract public class BasePlayer {
     protected final UnitController uc;

@@ -1,10 +1,10 @@
-package l_battermacro;
+package l_resourcemacro;
 
 import aic2023.user.Direction;
 import aic2023.user.Location;
 import aic2023.user.UnitController;
-import l_battermacro.util.IntHashMap;
-import l_battermacro.util.Util;
+import l_resourcemacro.util.IntHashMap;
+import l_resourcemacro.util.Util;
 
 public class BugMover {
 

@@ -1,7 +1,7 @@
-package l_battermacro;
+package l_resourcemacro;
 
 import aic2023.user.*;
-import l_battermacro.util.Util;
+import l_resourcemacro.util.Util;
 
 public class BatterPlayer extends BasePlayer {
     private final int BATTER_REACHABLE_DISTANCE = 8;
