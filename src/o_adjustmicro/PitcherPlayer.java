@@ -18,14 +18,17 @@ public class PitcherPlayer extends BasePlayer {
             senseAndReportStadiums();
             senseAndReportEnemies();
 
+//            debugBytecode("after reporting objects");
             final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
             final int directionOkay = calculateOkayDirections(nearbyEnemies);
+//            debugBytecode("after directionOkay");
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
 //            debug("directionOkay = " + directionOkay);
-            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
+            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) == 0) {
 //                debug("moving away from " + nearestEnemyBatter.getLocation());
                 Util.tryMoveInOkayDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()), directionOkay);
             }
+//            debugBytecode("after run away");
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
             if (claimedObjectLocation == null) {

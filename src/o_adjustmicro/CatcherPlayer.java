@@ -27,11 +27,14 @@ public class CatcherPlayer extends BasePlayer {
 
             final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
             final int directionOkay = calculateOkayDirections(nearbyEnemies);
+//            debug("directionOkay = " + directionOkay);
             final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
 //            debug("nearest enemy batter is " + nearestEnemyBatter);
-            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
+            if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) == 0) {
+//                debug("moving away from " + nearestEnemyBatter.getLocation());
                 Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
             }
+//            debugBytecode("after run away");
 
 //            debugBytecode("before move");
             if (uc.canMove()) {
@@ -92,7 +95,7 @@ public class CatcherPlayer extends BasePlayer {
         final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
         final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
 //            debug("nearest enemy batter is " + nearestEnemyBatter);
-        if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
+        if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) == 0) {
             Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
         }
 
