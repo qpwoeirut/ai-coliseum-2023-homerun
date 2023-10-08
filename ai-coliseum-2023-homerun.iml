@@ -32,6 +32,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/h4_queuescouting" />
       <excludeFolder url="file://$MODULE_DIR$/src/i_selfbat" />
       <excludeFolder url="file://$MODULE_DIR$/src/j_bugfix" />
+      <excludeFolder url="file://$MODULE_DIR$/src/k_edgecase" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
