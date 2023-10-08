@@ -49,7 +49,7 @@ public class CatcherPlayer extends BasePlayer {
                 if (target != null) {
                     scoutTarget(directionOkay);
                 } else {
-                    scoutRandomLine();
+                    scoutRandomLine(directionOkay);
                 }
             }
 
@@ -88,9 +88,8 @@ public class CatcherPlayer extends BasePlayer {
         }
     }
 
-    void scoutRandomLine() {
+    void scoutRandomLine(int directionOkay) {
         final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
-        final int directionOkay = calculateOkayDirections(nearbyEnemies);
         final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
 //            debug("nearest enemy batter is " + nearestEnemyBatter);
         if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) > 0) {
