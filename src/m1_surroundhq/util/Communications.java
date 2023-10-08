@@ -607,10 +607,10 @@ public class Communications {
 //        uc.println("fp: " + bestIdx + " " + convertToExternalX(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_X)) + " " + convertToExternalY(uc.read(MAP_OFFSET + bestIdx * MAP_SIZE + ORIGIN_Y)));
 
         final int currentDist = readMapLocation(bestIdx, curX, curY);
-        uc.println("going to " + externalTargetLoc + ", dist " + currentDist);
-        uc.println(readMapLocation(bestIdx, curX - 1, curY + 1) + " " + readMapLocation(bestIdx, curX, curY + 1) + " " + readMapLocation(bestIdx, curX + 1, curY + 1));
-        uc.println(readMapLocation(bestIdx, curX - 1, curY) + "         " + readMapLocation(bestIdx, curX + 1, curY));
-        uc.println(readMapLocation(bestIdx, curX - 1, curY - 1) + " " + readMapLocation(bestIdx, curX, curY - 1) + " " + readMapLocation(bestIdx, curX + 1, curY - 1));
+//        uc.println("going to " + externalTargetLoc + ", dist " + currentDist);
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY + 1) + " " + readMapLocation(bestIdx, curX, curY + 1) + " " + readMapLocation(bestIdx, curX + 1, curY + 1));
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY) + "         " + readMapLocation(bestIdx, curX + 1, curY));
+//        uc.println(readMapLocation(bestIdx, curX - 1, curY - 1) + " " + readMapLocation(bestIdx, curX, curY - 1) + " " + readMapLocation(bestIdx, curX + 1, curY - 1));
         if (currentDist == 0) return null;
         if (currentDist == INITIAL_DISTANCE) return Direction.ZERO;
 
