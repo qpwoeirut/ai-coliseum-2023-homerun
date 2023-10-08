@@ -3,11 +3,7 @@ package l_battermacro;
 import aic2023.user.*;
 import l_battermacro.util.Util;
 
-import java.util.Arrays;
 public class BatterPlayer extends BasePlayer {
-    // Add functionality to claim a function
-    private Location patrolLoc = null;  // location the batter should hover around
-    private Location hqLoc;
     private final int BATTER_REACHABLE_DISTANCE = 8;
     private final int BATTER_MOVABLE_DISTANCE = 12;
 
@@ -16,7 +12,9 @@ public class BatterPlayer extends BasePlayer {
     }
 
     void run() {
-        hqLoc = uc.getLocation();
+        MapObject claimedObjectType = null;
+        Location claimedObjectLocation = null;
+        int claimedObjectId = -1;
         while (true) {
             comms.checkIn();
             senseAndReportBases();
@@ -63,70 +61,91 @@ public class BatterPlayer extends BasePlayer {
 //            debugBytecode("after attack");
 
             if (uc.canMove()) {
-                if (patrolLoc != null) {
-                    patrol(enemies);
+//                debugBytecode("start normalBehavior");
+                final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
+                final int directionOkay = calculateOkayDirections(nearbyEnemies);
+//                debugBytecode("end directionOkay");
+
+                final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
+                if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
+//                    debug("enemy at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
+                    int bestDir = -1;
+                    int bestChebyshevDist = 100;
+                    for (int i = 8; i >= 0; --i) {
+                        if (((directionOkay >> i) & 1) > 0 && (uc.canMove(Direction.values()[i]) || i == 8)) {
+                            final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
+                            if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance > 2) {
+                                bestChebyshevDist = nearestChebyshevDistance;
+                                bestDir = i;
+                            }
+                        }
+                    }
+                    if (bestDir != -1 && bestDir != 8) {
+                        uc.move(Direction.values()[bestDir]);
+                    }
                 } else {
-                    normalBehavior(enemies);
+                    final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
+                    if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
+//                        debug("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
+                        Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
+                    } else {
+                        final int reportedEnemyCount = comms.listEnemySightings();
+                        final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
+                        if (targetEnemySightingIndex == -1) {
+                            if (claimedObjectLocation == null) {
+                                final int unclaimedStadiumCount = comms.listUnclaimedStadiumsAsBatter();
+                                final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
+                                if (claimedStadiumIndex != -1) {
+                                    claimedObjectType = MapObject.STADIUM;
+                                    claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
+                                    claimedObjectId = comms.returnedIds[claimedStadiumIndex];
+                                    comms.claimStadiumAsBatter(claimedObjectId);
+                                }
+
+                                if (claimedObjectLocation == null) {
+                                    final int unclaimedBaseCount = comms.listUnclaimedBasesAsBatter();
+                                    final int claimedBaseIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedBaseCount);
+                                    if (claimedBaseIndex != -1) {
+                                        claimedObjectType = MapObject.BASE;
+                                        claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
+                                        claimedObjectId = comms.returnedIds[claimedBaseIndex];
+                                        comms.claimBaseAsBatter(claimedObjectId);
+                                    }
+                                }
+                            }
+                            if (claimedObjectLocation != null) {
+                                if (claimedObjectType == MapObject.BASE) {
+                                    comms.claimBaseAsBatter(claimedObjectId);
+                                } else {
+                                    comms.claimStadiumAsBatter(claimedObjectId);
+                                }
+                                patrol(claimedObjectLocation, enemies, directionOkay);
+                            } else if (uc.canMove()) {
+                                Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
+                            }
+                        } else {
+                            if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) <= 16) {  // try to avoid batters all going to same place by reducing urgency
+                                comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR * 3);
+                            }
+                            Direction toMove = null;
+                            final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
+                            if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
+                                toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex], directionOkay);
+                            }
+                            if (toMove == null) toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                            if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
+                                uc.move(toMove);
+                            } else {
+                                Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]), directionOkay);
+                            }
+                        }
+                    }
                 }
+//                debugBytecode("end normalBehavior");
             }
 
             endTurn();
         }
-    }
-
-    void normalBehavior(UnitInfo[] enemies) {
-//        debugBytecode("start normalBehavior");
-        final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
-        final int directionOkay = calculateOkayDirections(nearbyEnemies);
-//        debugBytecode("end directionOkay");
-
-        final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
-        if (nearestEnemyBatter != null && comms.lowerBoundDistance(nearestEnemyBatter.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//            debug("enemy at " + nearestEnemyBatter.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemyBatter.getLocation()));
-            int bestDir = -1;
-            int bestChebyshevDist = 100;
-            for (int i = 8; i >= 0; --i) {
-                if (((directionOkay >> i) & 1) > 0 && (uc.canMove(Direction.values()[i]) || i == 8)) {
-                    final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
-                    if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance > 2) {
-                        bestChebyshevDist = nearestChebyshevDistance;
-                        bestDir = i;
-                    }
-                }
-            }
-            if (bestDir != -1 && bestDir != 8) {
-                uc.move(Direction.values()[bestDir]);
-            }
-        } else {
-            final UnitInfo nearestEnemy = Util.getNearest(uc.getLocation(), enemies);
-            if (nearestEnemy != null && comms.lowerBoundDistance(nearestEnemy.getLocation()) <= comms.DISTANCE_UNIT * BATTER_REACHABLE_DISTANCE) {
-//                debug("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
-                Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
-            } else {
-                final int reportedEnemyCount = comms.listEnemySightings();
-                final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                if (targetEnemySightingIndex == -1) {
-                    Util.tryMoveInDirection(uc, spreadOut());
-                } else {
-//                    uc.println("sighting at " + comms.returnedLocations[targetEnemySightingIndex] + ", distance: " + distance);
-                    if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) <= 16) {  // try to avoid batters all going to same place by reducing urgency
-                        comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR * 3);
-                    }
-                    Direction toMove = null;
-                    final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
-                    if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
-                        toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex], directionOkay);
-                    }
-                    if (toMove == null) toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
-                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
-                        uc.move(toMove);
-                    } else {
-                        Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]), directionOkay);
-                    }
-                }
-            }
-        }
-//        debugBytecode("end normalBehavior");
     }
 
     UnitInfo pickTargetToAttack(UnitInfo[] enemies) {
@@ -371,7 +390,7 @@ public class BatterPlayer extends BasePlayer {
         }
     }
 
-    void patrol(UnitInfo[] enemies) {
+    void patrol(Location patrolLoc, UnitInfo[] enemies, int directionOkay) {
         final int PATROL_DISTANCE = 72;  // range it can go to attack other units, relative to patrolLoc
         final int IDLE_DISTANCE = 8;  // range the batter should stay in the designated patrol location, when no enemies
         final UnitInfo nearestEnemyBatter = Util.getNearest(uc.getLocation(), enemies, UnitType.BATTER);
@@ -388,8 +407,9 @@ public class BatterPlayer extends BasePlayer {
                 }
                 //outside idle zone
                 else{
-                    final Direction toMove = bg.move(patrolLoc);
-                    if (uc.canMove(toMove) && toMove != Direction.ZERO) {
+                    Direction toMove = comms.directionViaFocalPoint(patrolLoc, directionOkay);
+                    if (toMove == null) toMove = bg.move(patrolLoc);
+                    if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove)) {
                         uc.move(toMove);
                     }
                 }
