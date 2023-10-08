@@ -209,15 +209,90 @@ public class BatterPlayer extends BasePlayer {
         int bestDir = -1;
         int bestEffectiveness = 0;
         // TODO try cardinal directions first so that move cooldown is smaller
-        for (int i = 8; i >= 0; --i) {
-            if (uc.canMove(Direction.values()[i]) || i == 8) {
-                final Location loc = uc.getLocation().add(Direction.values()[i]);
-                if (loc.distanceSquared(targetLocation) <= 2) {
-                    final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
-                    if (bestEffectiveness <= effectiveness) {
-                        bestEffectiveness = effectiveness;
-                        bestDir = i;
-                    }
+        if (uc.getLocation().distanceSquared(targetLocation) <= 2) {
+            final int effectiveness = hitEffectiveness(targetLocation, targetCost, uc.getLocation().directionTo(targetLocation));
+            if (bestEffectiveness <= effectiveness) {
+                bestEffectiveness = effectiveness;
+                bestDir = 8;
+            }
+        }
+        if (uc.canMove(Direction.NORTH)) {
+            final Location loc = uc.getLocation().add(Direction.NORTH);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 0;
+                }
+            }
+        }
+        if (uc.canMove(Direction.WEST)) {
+            final Location loc = uc.getLocation().add(Direction.WEST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 2;
+                }
+            }
+        }
+        if (uc.canMove(Direction.SOUTH)) {
+            final Location loc = uc.getLocation().add(Direction.SOUTH);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 4;
+                }
+            }
+        }
+        if (uc.canMove(Direction.EAST)) {
+            final Location loc = uc.getLocation().add(Direction.EAST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 6;
+                }
+            }
+        }
+        if (uc.canMove(Direction.NORTHWEST)) {
+            final Location loc = uc.getLocation().add(Direction.NORTHWEST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 1;
+                }
+            }
+        }
+        if (uc.canMove(Direction.SOUTHWEST)) {
+            final Location loc = uc.getLocation().add(Direction.SOUTHWEST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 3;
+                }
+            }
+        }
+        if (uc.canMove(Direction.SOUTHEAST)) {
+            final Location loc = uc.getLocation().add(Direction.SOUTHEAST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 5;
+                }
+            }
+        }
+        if (uc.canMove(Direction.NORTHEAST)) {
+            final Location loc = uc.getLocation().add(Direction.NORTHEAST);
+            if (loc.distanceSquared(targetLocation) <= 2) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
+                if (bestEffectiveness <= effectiveness) {
+                    bestEffectiveness = effectiveness;
+                    bestDir = 7;
                 }
             }
         }
@@ -341,14 +416,64 @@ public class BatterPlayer extends BasePlayer {
                 continue;
             }
 
-            // TODO try cardinal directions first so that move cooldown is smaller
-            for (int d = 8; d >= 0; --d) {
-                if (uc.canMove(Direction.values()[d]) || d == 8) {
-                    final Location loc = uc.getLocation().add(Direction.values()[d]);
-                    if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
-                        final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
-                        if (strength > 0) return (i * 9 + d) * 4 + strength;
-                    }
+            if (uc.getLocation().distanceSquared(allies[i].getLocation()) <= 2) {
+                final int strength = selfBatStrength(allies[i], uc.getLocation().directionTo(allies[i].getLocation()));
+                if (strength > 0) return (i * 9 + 8) * 4 + strength;
+            }
+            if (uc.canMove(Direction.NORTH)) {
+                final Location loc = uc.getLocation().add(Direction.NORTH);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.WEST)) {
+                final Location loc = uc.getLocation().add(Direction.WEST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 2) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.SOUTH)) {
+                final Location loc = uc.getLocation().add(Direction.SOUTH);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 4) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.EAST)) {
+                final Location loc = uc.getLocation().add(Direction.EAST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 6) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.NORTHWEST)) {
+                final Location loc = uc.getLocation().add(Direction.NORTHWEST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 1) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.SOUTHWEST)) {
+                final Location loc = uc.getLocation().add(Direction.SOUTHWEST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 3) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.SOUTHEAST)) {
+                final Location loc = uc.getLocation().add(Direction.SOUTHEAST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 5) * 4 + strength;
+                }
+            }
+            if (uc.canMove(Direction.NORTHEAST)) {
+                final Location loc = uc.getLocation().add(Direction.NORTHEAST);
+                if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
+                    final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
+                    if (strength > 0) return (i * 9 + 7) * 4 + strength;
                 }
             }
         }
