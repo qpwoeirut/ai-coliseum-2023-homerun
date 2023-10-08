@@ -89,9 +89,8 @@ public class BatterPlayer extends BasePlayer {
 //                        debug("enemy at " + nearestEnemy.getLocation() + ", lb dist: " + comms.lowerBoundDistance(nearestEnemy.getLocation()));
                         Util.tryMoveInDirection(uc, uc.getLocation().directionTo(nearestEnemy.getLocation()));
                     } else {
-                        final int reportedEnemyCount = comms.listEnemySightings();
-                        final int targetEnemySightingIndex = Util.getMaxIndex(comms.returnedUrgencies, reportedEnemyCount);
-                        if (targetEnemySightingIndex == -1) {
+                        final Location targetEnemySighting = comms.mostUrgentEnemySighting();
+                        if (targetEnemySighting == null) {
                             if (claimedObjectLocation == null) {
                                 final int unclaimedStadium = comms.nearestUnclaimedStadiumAsBatter();
                                 if (unclaimedStadium != -1) {
@@ -122,19 +121,19 @@ public class BatterPlayer extends BasePlayer {
                                 Util.tryMoveInOkayDirection(uc, Direction.values()[(int)(uc.getRandomDouble() * 8)], directionOkay);
                             }
                         } else {
-                            if (uc.getLocation().distanceSquared(comms.returnedLocations[targetEnemySightingIndex]) <= 16) {  // try to avoid batters all going to same place by reducing urgency
-                                comms.reduceSightingUrgency(comms.returnedLocations[targetEnemySightingIndex], URGENCY_FACTOR * 3);
+                            if (uc.getLocation().distanceSquared(targetEnemySighting) <= 16) {  // try to avoid batters all going to same place by reducing urgency
+                                comms.reduceSightingUrgency(targetEnemySighting, URGENCY_FACTOR * 3);
                             }
                             Direction toMove = null;
-                            final int distance = comms.lowerBoundDistance(comms.returnedLocations[targetEnemySightingIndex]);
+                            final int distance = comms.lowerBoundDistance(targetEnemySighting);
                             if (distance > comms.DISTANCE_UNIT * BATTER_MOVABLE_DISTANCE) {
-                                toMove = comms.directionViaFocalPoint(comms.returnedLocations[targetEnemySightingIndex], directionOkay);
+                                toMove = comms.directionViaFocalPoint(targetEnemySighting, directionOkay);
                             }
-                            if (toMove == null) toMove = bg.move(comms.returnedLocations[targetEnemySightingIndex]);
+                            if (toMove == null) toMove = bg.move(targetEnemySighting);
                             if (toMove != null && toMove != Direction.ZERO && uc.canMove(toMove) && ((directionOkay >> toMove.ordinal()) & 1) > 0) {
                                 uc.move(toMove);
                             } else {
-                                Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(comms.returnedLocations[targetEnemySightingIndex]), directionOkay);
+                                Util.tryMoveInOkayDirection(uc, uc.getLocation().directionTo(targetEnemySighting), directionOkay);
                             }
                         }
                     }

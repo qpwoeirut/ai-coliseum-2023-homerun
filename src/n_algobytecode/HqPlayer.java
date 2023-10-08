@@ -53,7 +53,7 @@ public class HqPlayer extends BasePlayer {
                 }
             }
 
-            if (comms.countBatters() * 2 < enemyBattersNearby * 3 || comms.countBatters() * 10 < comms.listEnemySightings()) {
+            if (comms.countBatters() * 2 < enemyBattersNearby * 3 || comms.countBatters() * 10 < comms.urgentEnemySightingCount()) {
                 while (uc.getReputation() >= UnitType.BATTER.getStat(UnitStat.REP_COST) && recruitUnitNextToEnemy(UnitType.BATTER, hasEnemyBatter)) {
                     // recruit batters to hit the nearby enemy batters
                 }

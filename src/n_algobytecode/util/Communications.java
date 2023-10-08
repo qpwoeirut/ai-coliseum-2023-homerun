@@ -288,21 +288,27 @@ public class Communications {
      * The urgency of each sighting can be accessed in the public returnedUrgency array.
      * No IDs are returned. The returnedIds array is not modified and will likely contain stale data.
      */
-    public int listEnemySightings() {
+    public Location mostUrgentEnemySighting() {
         final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
-        if (returnedLocations.length < totalEnemySightings || returnedUrgencies.length < totalEnemySightings) {
-            returnedLocations = new Location[totalEnemySightings];
-            returnedUrgencies = new int[totalEnemySightings];
+        int highestUrgency = 0;
+        Location mostUrgentLoc = null;
+        for (int i = totalEnemySightings - 1; i >= 0; --i) {
+            final Location loc = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
+            final int calculatedUrgency = readSightingProperty(i, ENEMY_URGENCY) * 50 - uc.getLocation().distanceSquared(loc);
+            if (highestUrgency < calculatedUrgency) {
+                highestUrgency = calculatedUrgency;
+                mostUrgentLoc = loc;
+            }
         }
+        return mostUrgentLoc;
+    }
+    public int urgentEnemySightingCount() {
+        final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
         int n = 0;
         for (int i = totalEnemySightings - 1; i >= 0; --i) {
             final Location loc = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
             final int calculatedUrgency = readSightingProperty(i, ENEMY_URGENCY) * 50 - uc.getLocation().distanceSquared(loc);
-            if (calculatedUrgency > 0) {
-                returnedLocations[n] = loc;
-                returnedUrgencies[n] = calculatedUrgency;
-                ++n;
-            }
+            n += calculatedUrgency > 0 ? 1 : 0;
         }
         return n;
     }
