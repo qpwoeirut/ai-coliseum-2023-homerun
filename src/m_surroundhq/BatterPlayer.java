@@ -275,7 +275,7 @@ public class BatterPlayer extends BasePlayer {
         for (int i = balls.length - 1; i >= 0; --i) {
             // TODO unroll and try cardinal directions first so that move cooldown is smaller
             for (int d = 8; d >= 0; --d) {
-                if (uc.canMove(Direction.values()[d]) || i == 8) {
+                if (uc.canMove(Direction.values()[d]) || d == 8) {
                     final Location loc = uc.getLocation().add(Direction.values()[d]);
                     if (loc.distanceSquared(balls[i]) <= 2) {
                         final int strength = ballStrength(balls[i], loc.directionTo(balls[i]));
@@ -346,7 +346,7 @@ public class BatterPlayer extends BasePlayer {
 
             // TODO try cardinal directions first so that move cooldown is smaller
             for (int d = 8; d >= 0; --d) {
-                if (uc.canMove(Direction.values()[d]) || i == 8) {
+                if (uc.canMove(Direction.values()[d]) || d == 8) {
                     final Location loc = uc.getLocation().add(Direction.values()[d]);
                     if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
                         final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
