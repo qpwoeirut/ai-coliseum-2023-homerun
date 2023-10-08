@@ -26,26 +26,6 @@ public class Util {
         return closest;
     }
 
-    public static Location getNearest(Location loc, Location[] locs) {
-        return getNearest(loc, locs, locs.length);
-    }
-
-    public static Location getNearest(Location loc, Location[] locs, int n) {
-        int minDist = 10000;
-        Location closest = null;
-        for (int i = n - 1; i >= 0; --i) {
-            if (minDist > loc.distanceSquared(locs[i])) {
-                minDist = loc.distanceSquared(locs[i]);
-                closest = locs[i];
-            }
-        }
-        return closest;
-    }
-
-    public static int getNearestIndex(Location loc, Location[] locs) {
-        return getNearestIndex(loc, locs, locs.length);
-    }
-
     public static int getNearestIndex(Location loc, Location[] locs, int n) {
         int minDist = 10000;
         int closestIndex = -1;
@@ -56,15 +36,6 @@ public class Util {
             }
         }
         return closestIndex;
-    }
-    public static int getNearestDistance(Location loc, UnitInfo[] units, UnitType type) {
-        int minDist = 10000;
-        for (int i = units.length - 1; i >= 0; --i) {
-            if (units[i].getType() == type && minDist > loc.distanceSquared(units[i].getLocation())) {
-                minDist = loc.distanceSquared(units[i].getLocation());
-            }
-        }
-        return minDist;
     }
 
     public static UnitInfo getNearestChebyshev(Location loc, UnitInfo[] units, UnitType type) {
@@ -115,12 +86,6 @@ public class Util {
             }
         }
         return bestIndex;
-    }
-
-    public static int countType(UnitInfo[] units, UnitType type) {
-        int count = 0;
-        for (int i = units.length - 1; i >= 0; --i) count += units[i].getType() == type ? 1 : 0;
-        return count;
     }
 
     public static void tryMoveInDirection(UnitController uc, Direction dir) {

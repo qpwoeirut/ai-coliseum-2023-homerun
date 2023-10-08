@@ -105,20 +105,6 @@ public class Communications {
         uc.write(offset, n);
     }
 
-    private void reportNewObject(Location loc, int offset) {
-        int n = uc.read(offset);
-        for (int i = n; i > 0; --i) {
-            if (uc.read(offset + OBJECT_SIZE * i + 1) == loc.x && uc.read(offset + OBJECT_SIZE * i + 2) == loc.y) return;
-        }
-
-        ++n;
-        uc.write(offset, n);
-        uc.write(offset + OBJECT_SIZE * n + OBJECT_X, loc.x);
-        uc.write(offset + OBJECT_SIZE * n + OBJECT_Y, loc.y);
-        uc.write(offset + OBJECT_SIZE * n + PITCHER_CLAIM, NO_CLAIM);
-        uc.write(offset + OBJECT_SIZE * n + BATTER_CLAIM, NO_CLAIM);
-    }
-
     // ------------------------------------------ COUNTING UNITS ON OUR TEAM ------------------------------------------
     public void checkIn() {
         final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
@@ -426,9 +412,6 @@ public class Communications {
             return readMapLocation(0, convertToInternalX(uc.getLocation().x), convertToInternalY(uc.getLocation().y)) == SENSED;
         }
     }
-    public boolean isPassable(Location externalLoc) {
-        return readMapLocation(0, convertToInternalX(externalLoc.x), convertToInternalY(externalLoc.y)) != UNINITIALIZED;
-    }
 
     // for all maps, both global and distance
     private int readMapLocation(int mapIdx, int internalX, int internalY) {
@@ -594,65 +577,6 @@ public class Communications {
         // if the direction ordinal is even, it's N/E/S/W, otherwise it's diagonal
         // best == ZERO is an edge case where the above isn't true, but then both possible return values are ZERO, so it's fine
         return bestDist - (best.ordinal() % 2 == 0 ? DISTANCE_UNIT : DISTANCE_ROOT) < currentDist ? best : Direction.ZERO;
-    }
-    public int directionsFromFocalPoint(Location externalTargetLoc) {
-        int curX = convertToInternalX(uc.getLocation().x), curY = convertToInternalY(uc.getLocation().y);
-        final int bestIdx = findBestDistanceMapIdx(convertToInternalX(externalTargetLoc.x), convertToInternalY(externalTargetLoc.y), curX, curY);
-        int dist = infIfZero(readMapLocation(bestIdx, curX, curY));
-        int n = 0;
-        while (dist > INITIAL_DISTANCE) {
-            if (dist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + 1, curY + 1)) {  // NORTHEAST
-                dist -= DISTANCE_ROOT;
-                ++curX; ++curY;
-                returnedDirections[n++] = Direction.SOUTHWEST;
-                continue;
-            }
-            if (dist - DISTANCE_ROOT == readMapLocation(bestIdx, curX + 1, curY - 1)) {  // SOUTHEAST
-                dist -= DISTANCE_ROOT;
-                ++curX; --curY;
-                returnedDirections[n++] = Direction.NORTHWEST;
-                continue;
-            }
-            if (dist - DISTANCE_ROOT == readMapLocation(bestIdx, curX - 1, curY - 1)) {  // SOUTHWEST
-                dist -= DISTANCE_ROOT;
-                --curX; --curY;
-                returnedDirections[n++] = Direction.NORTHEAST;
-                continue;
-            }
-            if (dist - DISTANCE_ROOT == readMapLocation(bestIdx, curX - 1, curY + 1)) {  // NORTHWEST
-                dist -= DISTANCE_ROOT;
-                --curX; ++curY;
-                returnedDirections[n++] = Direction.SOUTHEAST;
-                continue;
-            }
-
-            if (dist - DISTANCE_UNIT == readMapLocation(bestIdx, curX, curY + 1)) {  // NORTH
-                dist -= DISTANCE_UNIT;
-                ++curY;
-                returnedDirections[n++] = Direction.SOUTH;
-                continue;
-            }
-            if (dist - DISTANCE_UNIT == readMapLocation(bestIdx, curX + 1, curY)) {  // EAST
-                dist -= DISTANCE_UNIT;
-                ++curX;
-                returnedDirections[n++] = Direction.WEST;
-                continue;
-            }
-            if (dist - DISTANCE_UNIT == readMapLocation(bestIdx, curX, curY - 1)) {  // SOUTH
-                dist -= DISTANCE_UNIT;
-                --curY;
-                returnedDirections[n++] = Direction.NORTH;
-                continue;
-            }
-            if (dist - DISTANCE_UNIT == readMapLocation(bestIdx, curX - 1, curY)) {  // WEST
-                dist -= DISTANCE_UNIT;
-                --curX;
-                returnedDirections[n++] = Direction.EAST;
-                continue;
-            }
-            return -1;
-        }
-        return n;
     }
 
     public int lowerBoundDistance(Location loc1, Location loc2) {
