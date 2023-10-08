@@ -64,7 +64,6 @@ abstract public class BasePlayer {
     }
 
     // calculates if an enemy can hit our player at loc before it can move away
-    //
     protected boolean enemyBatterCanHitLocation(float movementCooldown, Location loc, UnitInfo[] enemies) {
         final int turnsBeforeCanMove = (int)movementCooldown;
 //        debug("cooldown: " + movementCooldown + ", loc: " + loc);
