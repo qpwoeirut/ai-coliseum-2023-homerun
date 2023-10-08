@@ -102,14 +102,10 @@ public class Communications {
 
     // ------------------------------------------ COUNTING UNITS ON OUR TEAM ------------------------------------------
     public void checkIn() {
-        final int typeNumber = uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER));
-        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
+        final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + (uc.getType() == UnitType.BATTER ? BATTER_NUMBER : (uc.getType() == UnitType.CATCHER ? CATCHER_NUMBER : (uc.getType() == UnitType.PITCHER ? PITCHER_NUMBER : HQ_NUMBER)));
         final int lastIndex = currentIndex - 4;
-        final int lastRoundCount = uc.read(lastIndex);
-        uc.write(lastIndex, lastRoundCount - 1);
-
-        final int currentRoundCount = uc.read(currentIndex);
-        uc.write(currentIndex, currentRoundCount + 1);
+        uc.write(lastIndex, uc.read(lastIndex) - 1);
+        uc.write(currentIndex, uc.read(currentIndex) + 1);
     }
 
     public int countBases() {
@@ -129,8 +125,7 @@ public class Communications {
     }
     private int countUnits(int typeNumber) {
         final int currentIndex = CHECK_IN_OFFSET + uc.getRound() * 4 + typeNumber;
-        final int lastIndex = currentIndex - 4;
-        return uc.read(lastIndex) + uc.read(currentIndex);
+        return uc.read(currentIndex - 4) + uc.read(currentIndex);
     }
 
     // ------------------------------------------ BASE AND STADIUM CLAIMING ------------------------------------------
@@ -259,9 +254,7 @@ public class Communications {
         uc.write(ENEMY_SIGHTING_OFFSET, currentSightingCount + idx + 1);
     }
     public void reduceSightingUrgency(Location loc, int urgencyDecrease) {
-        final int currentSightingCount = uc.read(ENEMY_SIGHTING_OFFSET);
-
-        for (int i = currentSightingCount - 1; i >= 0; --i) {
+        for (int i = uc.read(ENEMY_SIGHTING_OFFSET) - 1; i >= 0; --i) {
             if (loc.x == readSightingProperty(i, ENEMY_X) && loc.y == readSightingProperty(i, ENEMY_Y)) {
                 writeSightingProperty(i, ENEMY_URGENCY, readSightingProperty(i, ENEMY_URGENCY) - urgencyDecrease);
                 return;
@@ -283,10 +276,9 @@ public class Communications {
      * No IDs are returned. The returnedIds array is not modified and will likely contain stale data.
      */
     public Location mostUrgentEnemySighting() {
-        final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
         int highestUrgency = 0;
         Location mostUrgentLoc = null;
-        for (int i = totalEnemySightings - 1; i >= 0; --i) {
+        for (int i = uc.read(ENEMY_SIGHTING_OFFSET) - 1; i >= 0; --i) {
             final Location loc = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
             final int calculatedUrgency = readSightingProperty(i, ENEMY_URGENCY) * 50 - uc.getLocation().distanceSquared(loc);
             if (highestUrgency < calculatedUrgency) {
@@ -297,9 +289,8 @@ public class Communications {
         return mostUrgentLoc;
     }
     public int urgentEnemySightingCount() {
-        final int totalEnemySightings = uc.read(ENEMY_SIGHTING_OFFSET);
         int n = 0;
-        for (int i = totalEnemySightings - 1; i >= 0; --i) {
+        for (int i = uc.read(ENEMY_SIGHTING_OFFSET) - 1; i >= 0; --i) {
             final Location loc = new Location(readSightingProperty(i, ENEMY_X), readSightingProperty(i, ENEMY_Y));
             final int calculatedUrgency = readSightingProperty(i, ENEMY_URGENCY) * 50 - uc.getLocation().distanceSquared(loc);
             n += calculatedUrgency > 0 ? 1 : 0;
@@ -376,7 +367,7 @@ public class Communications {
                         );
                         if (dist < INF) {
                             writeMapLocation(m, x, y, dist);
-                            addToDistanceQueue(packMapIndexAndLocation(m, x, y));
+                            addToDistanceQueue((m * MAP_DIMENSION + x) * MAP_DIMENSION + y);
                             shouldAdd = true;
                         }
                     }
@@ -476,15 +467,11 @@ public class Communications {
         if (readMapLocation(0, newX, newY) != UNINITIALIZED) {
             if (infIfZero(readMapLocation(mapIdx, newX, newY)) > dist + distChange) {
                 writeMapLocation(mapIdx, newX, newY, dist + distChange);
-                addToDistanceQueue(packMapIndexAndLocation(mapIdx, newX, newY));
+                addToDistanceQueue((mapIdx * MAP_DIMENSION + newX) * MAP_DIMENSION + newY);
             }
         } else {
             writeMapLocation(mapIdx, newX, newY, INF); // signify location has been processed but isn't (yet) known to be passable
         }
-    }
-
-    private int packMapIndexAndLocation(int mapIdx, int x, int y) {
-        return (mapIdx * MAP_DIMENSION + x) * MAP_DIMENSION + y;
     }
 
     // adds to queue, trying to ensure that queue doesn't get messed up on bytecode overflows
@@ -500,10 +487,9 @@ public class Communications {
     // ------------------------------------------ DISTANCE MAPS ------------------------------------------
 
     private int findBestDistanceMapIdx(int internalCurrentX, int internalCurrentY, int internalTargetX, int internalTargetY) {
-        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int bestIdx = -1;
         int minDist = INF;
-        for (int i = n; i > 0; --i) {
+        for (int i = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT); i > 0; --i) {
             final int computedDist = infIfZero(readMapLocation(i, internalCurrentX, internalCurrentY)) / 10 + infIfZero(readMapLocation(i, internalTargetX, internalTargetY)) * 2;
             // prioritize going to focal point. INF / 10 + INF * 2 should not overflow
             if (minDist > computedDist) {
@@ -536,7 +522,7 @@ public class Communications {
         uc.write(MAP_OFFSET + MAP_SIZE * (n + 1) + ORIGIN_Y, internalY);
 
         writeMapLocation(n + 1, internalX, internalY, INITIAL_DISTANCE);
-        addToDistanceQueue(packMapIndexAndLocation(n + 1, internalX, internalY));
+        addToDistanceQueue(((n + 1) * MAP_DIMENSION + internalX) * MAP_DIMENSION + internalY);
     }
 
     /**
@@ -581,9 +567,8 @@ public class Communications {
     public int lowerBoundDistance(Location loc1, Location loc2) {
         final int curX = convertToInternalX(loc1.x), curY = convertToInternalY(loc1.y);
         final int internalX = convertToInternalX(loc2.x), internalY = convertToInternalY(loc2.y);
-        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
         int lbDist = (int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT);
-        for (int i = n; i > 0; --i) {
+        for (int i = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT); i > 0; --i) {
             final int dist1 = readMapLocation(i, curX, curY);
             final int dist2 = readMapLocation(i, internalX, internalY);
             if (dist1 != 0 && dist1 != INF && dist2 != 0 && dist2 != INF) {
@@ -600,8 +585,7 @@ public class Communications {
         if ((int)(Math.sqrt(uc.getLocation().distanceSquared(loc2)) * DISTANCE_UNIT) > threshold) return true;
         final int curX = convertToInternalX(loc1.x), curY = convertToInternalY(loc1.y);
         final int internalX = convertToInternalX(loc2.x), internalY = convertToInternalY(loc2.y);
-        final int n = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT);
-        for (int i = n; i > 0; --i) {
+        for (int i = uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT); i > 0; --i) {
             final int dist1 = readMapLocation(i, curX, curY);
             final int dist2 = readMapLocation(i, internalX, internalY);
             if (dist1 != 0 && dist1 != INF && dist2 != 0 && dist2 != INF && Math.abs(dist1 - dist2) > threshold) {
@@ -624,10 +608,8 @@ public class Communications {
         uc.write(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END, (queueEnd + 1) % SCOUTING_QUEUE_SIZE);
     }
     public Location popNearestScoutingQueue() {
-        final int n = Math.max(1, uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT));
-
         int queueStart = uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_START);
-        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 400 / n);
+        final int queueEnd = Math.min(uc.read(SCOUTING_QUEUE_OFFSET + SCOUTING_QUEUE_END), queueStart + 400 / Math.max(1, uc.read(MAP_OFFSET + DISTANCE_MAP_COUNT)));
         int bestDist = INF;
         int bestIdx = -1;
         Location bestLoc = null;
