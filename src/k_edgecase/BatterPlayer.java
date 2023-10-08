@@ -36,6 +36,20 @@ public class BatterPlayer extends BasePlayer {
                     comms.reportEnemySightings(enemies, URGENCY_FACTOR);
                 }
             }
+            if (uc.canAct()) {
+                Location[] balls = uc.senseObjects(MapObject.BALL, REACHABLE_VISION);
+                final int ballToHit = pickBallIndex(balls);
+                if (ballToHit != -1) {
+                    final int index = ballToHit / 9 / 4, dirIdx = (ballToHit / 4) % 9, strength = ballToHit % 4;
+//                    debug("toSelfBat " + allies[index].getLocation() + " " + strength);
+                    if (dirIdx != 8 && uc.canMove(Direction.values()[dirIdx])) {
+                        uc.move(Direction.values()[dirIdx]);
+                    }
+                    if (uc.canBat(uc.getLocation().directionTo(balls[index]), strength)) {
+                        uc.bat(uc.getLocation().directionTo(balls[index]), strength);
+                    }
+                }
+            }
 
             if (uc.canAct()) {
                 final UnitInfo[] allies = uc.senseUnits(8, uc.getTeam());
@@ -72,7 +86,7 @@ public class BatterPlayer extends BasePlayer {
             int bestDir = -1;
             int bestChebyshevDist = 100;
             for (int i = 8; i >= 0; --i) {
-                if (((directionOkay >> i) & 1) > 0 && uc.canMove(Direction.values()[i])) {
+                if (((directionOkay >> i) & 1) > 0 && (uc.canMove(Direction.values()[i]) || i == 8)) {
                     final int nearestChebyshevDistance = Util.getNearestChebyshevDistance(uc.getLocation().add(Direction.values()[i]), enemies, UnitType.BATTER);
                     if (bestChebyshevDist > nearestChebyshevDistance && nearestChebyshevDistance > 2) {
                         bestChebyshevDist = nearestChebyshevDistance;
@@ -80,7 +94,7 @@ public class BatterPlayer extends BasePlayer {
                     }
                 }
             }
-            if (bestDir != -1 && bestDir != 8 && uc.canMove(Direction.values()[bestDir])) {
+            if (bestDir != -1 && bestDir != 8) {
                 uc.move(Direction.values()[bestDir]);
             }
         } else {
@@ -122,7 +136,7 @@ public class BatterPlayer extends BasePlayer {
         int bestAttackScore = -1;
         for (int i = enemies.length - 1; i >= 0; --i) {
             if (enemies[i].getType() == UnitType.HQ || Util.chebyshevDistance(uc.getLocation(), enemies[i].getLocation()) > 2) continue;
-            final int val = directionToMoveToAttack(enemies[i]);
+            final int val = directionToMoveToAttack(enemies[i].getLocation(), enemies[i].getType().getStat(UnitStat.REP_COST));
             if (val != -1) {
                 // score by attack effectiveness (how much net reputation we gain), tiebreak by closest enemy
                 // batters are implicitly targeted first because they are worth 75 rep, which is more than the others
@@ -143,7 +157,7 @@ public class BatterPlayer extends BasePlayer {
     boolean attack(UnitInfo target) {  // return value currently unused but might be useful later, will leave for now
 //        uc.println("attack start " + uc.getEnergyUsed());
 
-        final int val = directionToMoveToAttack(target);
+        final int val = directionToMoveToAttack(target.getLocation(), target.getType().getStat(UnitStat.REP_COST));
         if (val == -1) return false;  // this should only ever happen if we ran out of bytecode
         Direction dir = Direction.values()[val % 9];
         if (dir != Direction.ZERO) {
@@ -162,11 +176,11 @@ public class BatterPlayer extends BasePlayer {
         return false;
     }
 
-    int directionToMoveToAttack(UnitInfo target) {
+    int directionToMoveToAttack(Location targetLocation, float targetCost) {
 //        debugBytecode("directionToMove start");
         if (!uc.canMove()) {
-            if (Util.chebyshevDistance(uc.getLocation(), target.getLocation()) <= 1) {
-                final int effectiveness = hitEffectiveness(target, uc.getLocation().directionTo(target.getLocation()));
+            if (Util.chebyshevDistance(uc.getLocation(), targetLocation) <= 1) {
+                final int effectiveness = hitEffectiveness(targetLocation, targetCost, uc.getLocation().directionTo(targetLocation));
                 if (effectiveness >= 0) {
 //                    debugBytecode("directionToMove end0");
                     return effectiveness * 9 + Direction.ZERO.ordinal();
@@ -178,12 +192,12 @@ public class BatterPlayer extends BasePlayer {
 
         int bestDir = -1;
         int bestEffectiveness = 0;
-        // try cardinal directions first so that move cooldown is smaller
+        // TODO try cardinal directions first so that move cooldown is smaller
         for (int i = 8; i >= 0; --i) {
-            if (uc.canMove(Direction.values()[i])) {
+            if (uc.canMove(Direction.values()[i]) || i == 8) {
                 final Location loc = uc.getLocation().add(Direction.values()[i]);
-                if (loc.distanceSquared(target.getLocation()) <= 2) {
-                    final int effectiveness = hitEffectiveness(target, loc.directionTo(target.getLocation()));
+                if (loc.distanceSquared(targetLocation) <= 2) {
+                    final int effectiveness = hitEffectiveness(targetLocation, targetCost, loc.directionTo(targetLocation));
                     if (bestEffectiveness <= effectiveness) {
                         bestEffectiveness = effectiveness;
                         bestDir = i;
@@ -196,36 +210,102 @@ public class BatterPlayer extends BasePlayer {
         return bestEffectiveness * 9 + bestDir;
     }
 
-    int hitEffectiveness(UnitInfo target, Direction dir) {
+    int hitEffectiveness(Location targetLocation, float targetCost, Direction dir) {
 //        debugBytecode("hitEffectiveness start");
 
         // run this GameConstants.MAX_STRENGTH=3 times
-        Location loc = target.getLocation().add(dir);
+        Location loc = targetLocation.add(dir);
         if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
-        if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (uc.isOutOfMap(loc)) return (int) targetCost;
         MapObject map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (map == MapObject.BALL || map == MapObject.WATER) return (int) targetCost;
         UnitInfo unit = uc.senseUnitAtLocation(loc);
-        if (unit != null) return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        if (unit != null) return (int) targetCost + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
 
         loc = loc.add(dir);
         if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
-        if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (uc.isOutOfMap(loc)) return (int) targetCost;
         map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (map == MapObject.BALL || map == MapObject.WATER) return (int) targetCost;
         unit = uc.senseUnitAtLocation(loc);
-        if (unit != null) return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        if (unit != null) return (int) targetCost + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
 
         loc = loc.add(dir);
         if (uc.getLocation().distanceSquared(loc) > VISION) return 0;
-        if (uc.isOutOfMap(loc)) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (uc.isOutOfMap(loc)) return (int) targetCost;
         map = uc.senseObjectAtLocation(loc, true);
-        if (map == MapObject.BALL || map == MapObject.WATER) return (int) target.getType().getStat(UnitStat.REP_COST);
+        if (map == MapObject.BALL || map == MapObject.WATER) return (int) targetCost;
         unit = uc.senseUnitAtLocation(loc);
-        if (unit != null) return (int) target.getType().getStat(UnitStat.REP_COST) + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        if (unit != null) return (int) targetCost + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
 
 //        debugBytecode("hitEffectiveness end");
         return 0;
+    }
+
+    /**
+     * Picks a nearby ball to hit, or returns -1 if no ball should be hit
+     * @param balls list of nearby balls that can be hit
+     * @return (idx * 9 + direction ordinal) * 4 + strength to hit ball or -1
+     */
+    int pickBallIndex(Location[] balls) {
+//        debugBytecode("pickBallIndex start");
+        int bestBallIdx = -1;
+        int bestDirOrd = -1;
+        int bestStrength = -1;
+        int bestAttackScore = -1;
+        for (int i = balls.length - 1; i >= 0; --i) {
+            // TODO unroll and try cardinal directions first so that move cooldown is smaller
+            for (int d = 8; d >= 0; --d) {
+                if (uc.canMove(Direction.values()[d]) || i == 8) {
+                    final Location loc = uc.getLocation().add(Direction.values()[d]);
+                    if (loc.distanceSquared(balls[i]) <= 2) {
+                        final int strength = ballStrength(balls[i], loc.directionTo(balls[i]));
+                        if (strength > 0 && bestAttackScore < strength / 4) {
+                            bestAttackScore = strength / 4;
+                            bestBallIdx = i;
+                            bestDirOrd = d;
+                            bestStrength = strength % 4;
+                        }
+                    }
+                }
+            }
+        }
+//        debugBytecode("pickBallIndex end. score = " + bestAttackScore);
+        return bestBallIdx == -1 ? -1 : (bestBallIdx * 9 + bestDirOrd) * 4 + bestStrength;
+    }
+
+    /**
+     * Recommends a strength to hit the ball at, given the ball and direction it will be hit
+     * @return score * 4 + strength, or -1 if the ball should not be hit
+     */
+    int ballStrength(Location targetLocation, Direction dir) {
+        Location loc = targetLocation.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION) return -1;
+        if (uc.isOutOfMap(loc)) return 0;  // hitting it out is okay
+        MapObject map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return 0;
+        UnitInfo unit = uc.senseUnitAtLocation(loc);
+        int score1 = (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION) return score1 <= 1 ? -1 : score1 * 4 + 1;  // higher cutoff because we might be hitting it back to an enemy batter
+        if (uc.isOutOfMap(loc)) return score1 <= 0 ? -1 : score1 * 4 + 1;
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return score1 <= 0 ? -1 : score1 * 4 + 1;
+        unit = uc.senseUnitAtLocation(loc);
+        int score2 = score1 + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+
+        loc = loc.add(dir);
+        if (uc.getLocation().distanceSquared(loc) > VISION) return score2 > score1 ? (score2 <= 1 ? -1 : score2 * 4 + 2) : (score1 <= 1 ? -1 : score1 * 4 + 1);
+        if (uc.isOutOfMap(loc)) return score2 >= score1 ? (score2 <= 0 ? -1 : score2 * 4 + 2) : (score1 <= 0 ? -1 : score1 * 4 + 1);
+        map = uc.senseObjectAtLocation(loc, true);
+        if (map == MapObject.BALL || map == MapObject.WATER) return score2 > score1 ? (score2 <= 0 ? -1 : score2 * 4 + 2) : (score1 <= 0 ? -1 : score1 * 4 + 1);
+        unit = uc.senseUnitAtLocation(loc);
+        int score3 = (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+
+        return score3 > score2 && score3 > score1 ?
+                (score3 <= 0 ? -1 : score3 * 4 + 3) :
+                (score2 > score1 ? (score2 <= 0 ? -1 : score2 * 4 + 2) : (score1 <= 0 ? -1 : score1 * 4 + 1));
     }
 
     int pickTargetIndexToSelfBat(UnitInfo[] allies) {
@@ -245,9 +325,9 @@ public class BatterPlayer extends BasePlayer {
                 continue;
             }
 
-            // try cardinal directions first so that move cooldown is smaller
+            // TODO try cardinal directions first so that move cooldown is smaller
             for (int d = 8; d >= 0; --d) {
-                if (uc.canMove(Direction.values()[d])) {
+                if (uc.canMove(Direction.values()[d]) || i == 8) {
                     final Location loc = uc.getLocation().add(Direction.values()[d]);
                     if (loc.distanceSquared(allies[i].getLocation()) <= 2) {
                         final int strength = selfBatStrength(allies[i], loc.directionTo(allies[i].getLocation()));
