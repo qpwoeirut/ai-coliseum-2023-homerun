@@ -26,18 +26,6 @@ public class Util {
         return closest;
     }
 
-    public static int getNearestIndex(Location loc, Location[] locs, int n) {
-        int minDist = 10000;
-        int closestIndex = -1;
-        for (int i = n - 1; i >= 0; --i) {
-            if (minDist > loc.distanceSquared(locs[i])) {
-                minDist = loc.distanceSquared(locs[i]);
-                closestIndex = i;
-            }
-        }
-        return closestIndex;
-    }
-
     public static UnitInfo getNearestChebyshev(Location loc, UnitInfo[] units, UnitType type) {
         int minDist = 10000;
         UnitInfo closest = null;
@@ -73,19 +61,6 @@ public class Util {
         final int dx = Math.max(0, Math.abs(a.x - b.x) - 2);
         final int dy = Math.max(0, Math.abs(a.y - b.y) - 2);
         return Math.abs(dx - dy) + (Math.max(dx, dy) - Math.abs(dx - dy)) * 1.4142f;
-    }
-
-    public static int getMaxIndex(int[] values, int n) {
-        if (n <= 0) return -1;
-        int bestValue = values[0];
-        int bestIndex = 0;
-        for (int i = n - 1; i > 0; --i) {
-            if (bestValue < values[i]) {
-                bestValue = values[i];
-                bestIndex = i;
-            }
-        }
-        return bestIndex;
     }
 
     public static void tryMoveInDirection(UnitController uc, Direction dir) {
