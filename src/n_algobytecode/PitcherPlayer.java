@@ -29,27 +29,20 @@ public class PitcherPlayer extends BasePlayer {
 
 //            uc.println("type, location, id: " + claimedObjectType + " " + claimedObjectLocation + " " + claimedObjectId);
             if (claimedObjectLocation == null) {
-                final int unclaimedStadiumCount = comms.listUnclaimedStadiumsAsPitcher();
-//                uc.println("unclaimedStadiumCount: " + unclaimedStadiumCount);
-                final int claimedStadiumIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedStadiumCount);
-                if (claimedStadiumIndex != -1) {
+                final int unclaimedStadium = comms.nearestUnclaimedStadiumAsPitcher();
+                if (unclaimedStadium != -1) {
                     claimedObjectType = MapObject.STADIUM;
-                    claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
-                    claimedObjectId = comms.returnedIds[claimedStadiumIndex];
+                    claimedObjectLocation = new Location((unclaimedStadium / comms.EXTERNAL_PACK_FACTOR) % comms.EXTERNAL_PACK_FACTOR, unclaimedStadium % comms.EXTERNAL_PACK_FACTOR);
+                    claimedObjectId = (unclaimedStadium / comms.EXTERNAL_PACK_FACTOR) / comms.EXTERNAL_PACK_FACTOR;
                     comms.claimStadiumAsPitcher(claimedObjectId, 1);
                 }
 
                 if (claimedObjectLocation == null) {
-                    final int unclaimedBaseCount = comms.listUnclaimedBasesAsPitcher();
-//                    uc.println("unclaimedBaseCount: " + unclaimedBaseCount);
-//                    for (int i = 0; i < unclaimedBaseCount; ++i) {
-//                        uc.println(comms.returnedLocations[i] + " " + comms.returnedIds[i]);
-//                    }
-                    final int claimedBaseIndex = Util.getNearestIndex(uc.getLocation(), comms.returnedLocations, unclaimedBaseCount);
-                    if (claimedBaseIndex != -1) {
+                    final int unclaimedBase = comms.nearestUnclaimedBaseAsPitcher();
+                    if (unclaimedBase != -1) {
                         claimedObjectType = MapObject.BASE;
-                        claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
-                        claimedObjectId = comms.returnedIds[claimedBaseIndex];
+                        claimedObjectLocation = new Location((unclaimedBase / comms.EXTERNAL_PACK_FACTOR) % comms.EXTERNAL_PACK_FACTOR, unclaimedBase % comms.EXTERNAL_PACK_FACTOR);
+                        claimedObjectId = (unclaimedBase / comms.EXTERNAL_PACK_FACTOR) / comms.EXTERNAL_PACK_FACTOR;
                         comms.claimBaseAsPitcher(claimedObjectId, 1);
                     }
                 }

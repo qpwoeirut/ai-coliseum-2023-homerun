@@ -13,6 +13,7 @@ public class Communications {
     private final int CLAIM_MAX_ATTEMPTS = 100;
     private final int CLAIM_BACKOFF = 5;
     private final int NO_CLAIM = 0;
+    public final int EXTERNAL_PACK_FACTOR = 5000;
 
     private final int MAX_OBJECT_COUNT = 3650; // > 60^2
     private final int BASE_OFFSET = 0;
@@ -145,8 +146,8 @@ public class Communications {
      * The base locations can be accessed in the public returnedLocations array.
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedBasesAsPitcher() {
-        return listUnclaimedObjects(BASE_OFFSET, PITCHER_CLAIM);
+    public int nearestUnclaimedBaseAsPitcher() {
+        return nearestUnclaimedObject(BASE_OFFSET, PITCHER_CLAIM);
     }
 
     /**
@@ -155,8 +156,8 @@ public class Communications {
      * The base locations can be accessed in the public returnedLocations array
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedStadiumsAsPitcher() {
-        return listUnclaimedObjects(STADIUM_OFFSET, PITCHER_CLAIM);
+    public int nearestUnclaimedStadiumAsPitcher() {
+        return nearestUnclaimedObject(STADIUM_OFFSET, PITCHER_CLAIM);
     }
 
     /**
@@ -165,8 +166,8 @@ public class Communications {
      * The base locations can be accessed in the public returnedLocations array.
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedBasesAsBatter() {
-        return listUnclaimedObjects(BASE_OFFSET, BATTER_CLAIM);
+    public int nearestUnclaimedBaseAsBatter() {
+        return nearestUnclaimedObject(BASE_OFFSET, BATTER_CLAIM);
     }
 
     /**
@@ -175,26 +176,24 @@ public class Communications {
      * The base locations can be accessed in the public returnedLocations array
      * The IDs (which are internal IDs used by the Communications class) can be accessed in the public returnedIds array.
      */
-    public int listUnclaimedStadiumsAsBatter() {
-        return listUnclaimedObjects(STADIUM_OFFSET, BATTER_CLAIM);
+    public int nearestUnclaimedStadiumAsBatter() {
+        return nearestUnclaimedObject(STADIUM_OFFSET, BATTER_CLAIM);
     }
 
-    private int listUnclaimedObjects(int offset, int claimOffset) {
-        final int totalObjects = uc.read(offset);
-        if (returnedLocations.length < totalObjects || returnedIds.length < totalObjects) {
-            returnedLocations = new Location[totalObjects];
-            returnedIds = new int[totalObjects];
-        }
-
-        int n = 0;
-        for (int i = totalObjects - 1; i >= 0; --i) {
+    private int nearestUnclaimedObject(int offset, int claimOffset) {
+        int nearestDist = INF;
+        int returnVal = -1;
+        for (int i = uc.read(offset) - 1; i >= 0; --i) {
             final int claimValue = readObjectProperty(offset, i, claimOffset);
             if ((claimValue / CLAIM_MAX_ATTEMPTS) % CLAIM_MAX_ROUND <= uc.getRound() - (claimValue % CLAIM_MAX_ATTEMPTS) * CLAIM_BACKOFF) {
-                returnedLocations[n] = new Location(readObjectProperty(offset, i, OBJECT_X), readObjectProperty(offset, i, OBJECT_Y));
-                returnedIds[n++] = i;
+                Location loc = new Location(readObjectProperty(offset, i, OBJECT_X), readObjectProperty(offset, i, OBJECT_Y));
+                if (nearestDist > uc.getLocation().distanceSquared(loc)) {
+                    nearestDist = uc.getLocation().distanceSquared(loc);
+                    returnVal = (i * EXTERNAL_PACK_FACTOR + loc.x) * EXTERNAL_PACK_FACTOR + loc.y;
+                }
             }
         }
-        return n;
+        return returnVal;
     }
 
     public void claimBaseAsPitcher(int baseId, int attemptIncrement) {
