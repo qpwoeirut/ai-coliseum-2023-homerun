@@ -4,19 +4,15 @@ import aic2023.user.*;
 
 public class Communications {
     private final UnitController uc;
-
-    // for objects (bases, stadiums, water)
-    // a[0] = number of specified object
-    // a[4i + 1 ... 4i + 4] describes object i with (x, y, id of claiming pitcher or 0 if unclaimed, round that claim was most recently updated)
     private final int OBJECT_SIZE = 4;
     private final int OBJECT_X = 1;
     private final int OBJECT_Y = 2;
-    private final int PITCHER_CLAIM = 3;  // value will be ID * 2000 + round
-    private final int BATTER_CLAIM = 4;   // value will be ID * 2000 + round
-    private final int CLAIM_FACTOR = 2000;
-    private final int CLAIM_ROUND_OFFSET = 10;  // offset allows claim round value of 0 to always be unclaimed
-    private final int NO_CLAIM = 0;  // IDs are in [1, 10000]
-    private final int CLAIM_EXPIRATION = 3;  // if a pitcher doesn't update their claim in 3 rounds, assume they've died
+    private final int PITCHER_CLAIM = 3;  // (value will be ID * CLAIM_MAX_ROUND + round) * CLAIM_MAX_ATTEMPTS + attempts. IDs are in [1, 10000]
+    private final int BATTER_CLAIM = 4;   // (value will be ID * CLAIM_MAX_ROUND + round) * CLAIM_MAX_ATTEMPTS + attempts. IDs are in [1, 10000]
+    private final int CLAIM_MAX_ROUND = 2000;
+    private final int CLAIM_MAX_ATTEMPTS = 100;
+    private final int CLAIM_BACKOFF = 5;
+    private final int NO_CLAIM = 0;
 
     private final int MAX_OBJECT_COUNT = 3650; // > 60^2
     private final int BASE_OFFSET = 0;
@@ -206,7 +202,8 @@ public class Communications {
 
         int n = 0;
         for (int i = totalObjects - 1; i >= 0; --i) {
-            if (readObjectProperty(offset, i, claimOffset) % CLAIM_FACTOR < uc.getRound() - CLAIM_EXPIRATION + CLAIM_ROUND_OFFSET) {
+            final int claimValue = readObjectProperty(offset, i, claimOffset);
+            if ((claimValue / CLAIM_MAX_ATTEMPTS) % CLAIM_MAX_ROUND <= uc.getRound() - (claimValue % CLAIM_MAX_ATTEMPTS) * CLAIM_BACKOFF) {
                 returnedLocations[n] = new Location(readObjectProperty(offset, i, OBJECT_X), readObjectProperty(offset, i, OBJECT_Y));
                 returnedIds[n++] = i;
             }
@@ -214,18 +211,22 @@ public class Communications {
         return n;
     }
 
-    public void claimBaseAsPitcher(int baseId) {
-        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + PITCHER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
+    public void claimBaseAsPitcher(int baseId, int attemptIncrement) {
+        final int arrayIndex = BASE_OFFSET + baseId * OBJECT_SIZE + PITCHER_CLAIM;
+        uc.write(arrayIndex, (uc.getInfo().getID() * CLAIM_MAX_ROUND + uc.getRound()) * CLAIM_MAX_ATTEMPTS + ((uc.read(arrayIndex) % CLAIM_MAX_ATTEMPTS) + attemptIncrement));
     }
-    public void claimStadiumAsPitcher(int stadiumId) {
-        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + PITCHER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
+    public void claimStadiumAsPitcher(int stadiumId, int attemptIncrement) {
+        final int arrayIndex = STADIUM_OFFSET + stadiumId * OBJECT_SIZE + PITCHER_CLAIM;
+        uc.write(arrayIndex, (uc.getInfo().getID() * CLAIM_MAX_ROUND + uc.getRound()) * CLAIM_MAX_ATTEMPTS + ((uc.read(arrayIndex) % CLAIM_MAX_ATTEMPTS) + attemptIncrement));
     }
 
     public void claimBaseAsBatter(int baseId) {
-        uc.write(BASE_OFFSET + baseId * OBJECT_SIZE + BATTER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
+        final int arrayIndex = BASE_OFFSET + baseId * OBJECT_SIZE + BATTER_CLAIM;
+        uc.write(arrayIndex, (uc.getInfo().getID() * CLAIM_MAX_ROUND + uc.getRound()) * CLAIM_MAX_ATTEMPTS + (uc.read(arrayIndex) % CLAIM_MAX_ATTEMPTS));  // don't do backoff for batters
     }
     public void claimStadiumAsBatter(int stadiumId) {
-        uc.write(STADIUM_OFFSET + stadiumId * OBJECT_SIZE + BATTER_CLAIM, uc.getInfo().getID() * CLAIM_FACTOR + uc.getRound() + CLAIM_ROUND_OFFSET);
+        final int arrayIndex = STADIUM_OFFSET + stadiumId * OBJECT_SIZE + BATTER_CLAIM;
+        uc.write(arrayIndex, (uc.getInfo().getID() * CLAIM_MAX_ROUND + uc.getRound()) * CLAIM_MAX_ATTEMPTS + (uc.read(arrayIndex) % CLAIM_MAX_ATTEMPTS));
     }
 
     private int readObjectProperty(int offset, int index, int property) {

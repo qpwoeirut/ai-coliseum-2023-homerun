@@ -36,7 +36,7 @@ public class PitcherPlayer extends BasePlayer {
                     claimedObjectType = MapObject.STADIUM;
                     claimedObjectLocation = comms.returnedLocations[claimedStadiumIndex];
                     claimedObjectId = comms.returnedIds[claimedStadiumIndex];
-                    comms.claimStadiumAsPitcher(claimedObjectId);
+                    comms.claimStadiumAsPitcher(claimedObjectId, 1);
                 }
 
                 if (claimedObjectLocation == null) {
@@ -50,16 +50,16 @@ public class PitcherPlayer extends BasePlayer {
                         claimedObjectType = MapObject.BASE;
                         claimedObjectLocation = comms.returnedLocations[claimedBaseIndex];
                         claimedObjectId = comms.returnedIds[claimedBaseIndex];
-                        comms.claimBaseAsPitcher(claimedObjectId);
+                        comms.claimBaseAsPitcher(claimedObjectId, 1);
                     }
                 }
             }
 
             if (claimedObjectLocation != null) {
                 if (claimedObjectType == MapObject.BASE) {
-                    comms.claimBaseAsPitcher(claimedObjectId);
+                    comms.claimBaseAsPitcher(claimedObjectId, 0);
                 } else {
-                    comms.claimStadiumAsPitcher(claimedObjectId);
+                    comms.claimStadiumAsPitcher(claimedObjectId, 0);
                 }
                 if (uc.canMove() && !claimedObjectLocation.isEqual(uc.getLocation())) {
                     Direction toMove = comms.directionViaFocalPoint(claimedObjectLocation, directionOkay);
