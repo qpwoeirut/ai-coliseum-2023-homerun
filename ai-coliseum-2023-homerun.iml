@@ -34,6 +34,8 @@
       <excludeFolder url="file://$MODULE_DIR$/src/j_bugfix" />
       <excludeFolder url="file://$MODULE_DIR$/src/k_edgecase" />
       <excludeFolder url="file://$MODULE_DIR$/src/l_resourcemacro" />
+      <excludeFolder url="file://$MODULE_DIR$/src/m1_surroundhq" />
+      <excludeFolder url="file://$MODULE_DIR$/src/m2_bugfix" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
