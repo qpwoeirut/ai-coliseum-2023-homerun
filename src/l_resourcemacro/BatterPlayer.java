@@ -304,7 +304,7 @@ public class BatterPlayer extends BasePlayer {
         MapObject map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return 0;
         UnitInfo unit = uc.senseUnitAtLocation(loc);
-        int score1 = (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        final int score1 = unit == null ? 0 : ((unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST));
 
         loc = loc.add(dir);
         if (uc.getLocation().distanceSquared(loc) > VISION) return score1 <= 1 ? -1 : score1 * 4 + 1;  // higher cutoff because we might be hitting it back to an enemy batter
@@ -312,7 +312,7 @@ public class BatterPlayer extends BasePlayer {
         map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return score1 <= 0 ? -1 : score1 * 4 + 1;
         unit = uc.senseUnitAtLocation(loc);
-        int score2 = score1 + (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        final int score2 = score1 + (unit == null ? 0 : ((unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST)));
 
         loc = loc.add(dir);
         if (uc.getLocation().distanceSquared(loc) > VISION) return score2 > score1 ? (score2 <= 1 ? -1 : score2 * 4 + 2) : (score1 <= 1 ? -1 : score1 * 4 + 1);
@@ -320,7 +320,7 @@ public class BatterPlayer extends BasePlayer {
         map = uc.senseObjectAtLocation(loc, true);
         if (map == MapObject.BALL || map == MapObject.WATER) return score2 > score1 ? (score2 <= 0 ? -1 : score2 * 4 + 2) : (score1 <= 0 ? -1 : score1 * 4 + 1);
         unit = uc.senseUnitAtLocation(loc);
-        int score3 = (unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST);
+        final int score3 = score2 + (unit == null ? 0 : ((unit.getTeam() == uc.getOpponent() ? 1 : -1) * (int) unit.getType().getStat(UnitStat.REP_COST)));
 
         return score3 > score2 && score3 > score1 ?
                 (score3 <= 0 ? -1 : score3 * 4 + 3) :
