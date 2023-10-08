@@ -12,7 +12,7 @@ abstract public class BasePlayer {
     protected final int URGENCY_FACTOR;
 
     // farthest away (in squared distance) that an enemy batter can be while posing a threat
-    protected final int REACHABLE_VISION = 15;
+    protected final int REACHABLE_VISION = 18;
 
     BasePlayer(UnitController uc) {
         this.uc = uc;
