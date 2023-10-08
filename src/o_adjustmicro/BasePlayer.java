@@ -66,13 +66,14 @@ abstract public class BasePlayer {
     // calculates if an enemy can hit our player at loc before it can move away
     protected boolean enemyBatterCanHitLocation(float movementCooldown, Location loc, UnitInfo[] enemies) {
         final int turnsBeforeCanMove = (int)movementCooldown;
-//        debug("cooldown: " + movementCooldown + ", loc: " + loc);
+//        debugBytecode("cooldown: " + movementCooldown + ", loc: " + loc);
         for (int i = enemies.length - 1; i >= 0; --i) {
             if (enemies[i].getType() == UnitType.BATTER && turnsBeforeCanMove >= (int)(enemies[i].getCurrentActionCooldown() - 1) && loc.distanceSquared(enemies[i].getLocation()) <= (2 + turnsBeforeCanMove) * (2 + turnsBeforeCanMove) * 2) {
-                final float cooldownToBeNear = Util.movementNearDistance(loc, enemies[i].getLocation()) * 1.5f;
-//                debug(i + " " + enemies[i].getCurrentMovementCooldown() + " " + cooldownToBeNear + " " + comms.lowerBoundDistance(loc, enemies[i].getLocation()) + " " + (int)(cooldownToBeNear + enemies[i].getCurrentMovementCooldown() - 0.999));
-                if ((cooldownToBeNear > 0 && enemies[i].getCurrentMovementCooldown() >= 1 ? 1 : 0) + (int)(cooldownToBeNear + enemies[i].getCurrentMovementCooldown() - 0.999) <= turnsBeforeCanMove &&
-                        !comms.lowerBoundDistanceGreaterThan(loc, enemies[i].getLocation(), (2 + turnsBeforeCanMove) * comms.DISTANCE_ROOT)) {
+                final int turnsToBeNearAndReady = loc.distanceSquared(enemies[i].getLocation()) <= 8 ? 0 : (int)(Util.movementNearDistance(loc, enemies[i].getLocation()) * 1.5f + enemies[i].getCurrentMovementCooldown());  // turns including the next turn
+//                debug(i + " " + enemies[i].getCurrentMovementCooldown() + " " + turnsToBeNearAndReady + " " + turnsBeforeCanMove);
+                if (turnsToBeNearAndReady <= turnsBeforeCanMove &&
+                        !comms.lowerBoundDistanceGreaterThan(loc, enemies[i].getLocation(), (2 + turnsBeforeCanMove) * comms.DISTANCE_ROOT)  // sometimes distance maps might mess this up, unsure
+                ) {
 //                    debug("batter too close!");
                     return true;
                 }
