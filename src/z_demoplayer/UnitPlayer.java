@@ -20,6 +20,7 @@ public class UnitPlayer {
 			/*If this unit is a HQ, try to recruit a pitcher following direction dir*/
 			if (uc.getType() == UnitType.HQ){
 				if (uc.canRecruitUnit(UnitType.PITCHER, dir)) uc.recruitUnit(UnitType.PITCHER, dir);
+				if (uc.canConstructBall(dir)) uc.constructBall(dir);
 			}
 
 			/*Otherwise, if there is a stadium or a base *without* a pitcher on top, go there*/
