@@ -154,6 +154,10 @@ public class HqPlayer extends BasePlayer {
             uc.recruitUnit(type, Direction.NORTH);
             return true;
         }
+        if (uc.canRecruitUnit(type, Direction.EAST)) {
+            uc.recruitUnit(type, Direction.EAST);
+            return true;
+        }
         return false;
     }
 
