@@ -92,8 +92,7 @@ public class CatcherPlayer extends BasePlayer {
     }
 
     void scoutRandomLine(int directionOkay) {
-        final UnitInfo[] nearbyEnemies = uc.senseUnits(REACHABLE_VISION, uc.getOpponent());
-        final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), nearbyEnemies, UnitType.BATTER);
+        final UnitInfo nearestEnemyBatter = Util.getNearestChebyshev(uc.getLocation(), uc.senseUnits(REACHABLE_VISION, uc.getOpponent()), UnitType.BATTER);
 //            debug("nearest enemy batter is " + nearestEnemyBatter);
         if (nearestEnemyBatter != null && ((directionOkay >> Direction.ZERO.ordinal()) & 1) == 0) {
             Util.tryMoveInDirection(uc, nearestEnemyBatter.getLocation().directionTo(uc.getLocation()));
