@@ -37,6 +37,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/m1_surroundhq" />
       <excludeFolder url="file://$MODULE_DIR$/src/m2_bugfix" />
       <excludeFolder url="file://$MODULE_DIR$/src/n_algobytecode" />
+      <excludeFolder url="file://$MODULE_DIR$/src/o_adjustmicro" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
