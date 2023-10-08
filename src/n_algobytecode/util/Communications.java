@@ -64,12 +64,6 @@ public class Communications {
     private final int INITIAL_DISTANCE = 1;  // 0 represents INF, since array is 0-initialized
     private final int INF = 1_000_000_000;
 
-    // for functions that require arrays to be returned. this is more efficient because we don't need to allocate an array each time
-    public Location[] returnedLocations = new Location[20];  // for both map objects and enemy sightings
-    public int[] returnedIds = new int[8];  // only used for map objects
-    public int[] returnedUrgencies = new int[20];  // only used for enemy sightings
-    public Direction[] returnedDirections = new Direction[200];  // be safe
-
     public Communications(UnitController uc) {
         this.uc = uc;
         if (uc.getType() == UnitType.HQ) {
