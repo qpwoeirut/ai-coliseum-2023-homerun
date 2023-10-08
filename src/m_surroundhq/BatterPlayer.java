@@ -53,8 +53,8 @@ public class BatterPlayer extends BasePlayer {
                 final UnitInfo[] allies = uc.senseUnits(8, uc.getTeam());
                 final int toSelfBat = pickTargetIndexToSelfBat(allies);
                 if (toSelfBat != -1) {
-                    final int index = toSelfBat / 9 / 4, dirIdx = (toSelfBat / 4) % 9, strength = toSelfBat % 4;
 //                    debug("toSelfBat " + allies[index].getLocation() + " " + strength);
+                    final int index = (toSelfBat / 4) / 9, dirIdx = (toSelfBat / 4) % 9, strength = toSelfBat % 4;
                     selfBat(allies[index], strength, Direction.values()[dirIdx]);
                 }
             }
